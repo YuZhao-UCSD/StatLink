@@ -1,0 +1,21 @@
+# Byte-compiled / caches
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Virtual environments & OS files
+.venv/
+venv/
+ENV/
+.env
+.DS_Store
+Thumbs.db
+
+# Unpacked SQLite database & WAL files (reconstructed automatically on first run from data/db_parts/)
+data/stat_genealogy.db
+data/stat_genealogy.db-wal
+data/stat_genealogy.db-shm
+data/stat_genealogy.db.tmp
+
+# Upstream bulk raw dumps (>50MB–120MB; documented in .agents/skills/statlineage-blueprint/)
+data_raw/

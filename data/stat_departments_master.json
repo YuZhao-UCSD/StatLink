@@ -1,0 +1,1904 @@
+[
+  {
+    "school": "Harvard University",
+    "country": "United States",
+    "departments": [
+      "Department of Statistics",
+      "Department of Biostatistics (HSPH)"
+    ],
+    "seed_urls": [
+      "https://statistics.fas.harvard.edu/people",
+      "https://hsph.harvard.edu/department/biostatistics/people/"
+    ]
+  },
+  {
+    "school": "Stanford University",
+    "country": "United States",
+    "departments": [
+      "Department of Statistics",
+      "Department of Biomedical Data Science"
+    ],
+    "seed_urls": [
+      "https://statistics.stanford.edu/people/faculty",
+      "https://dbds.stanford.edu/people/faculty.html"
+    ]
+  },
+  {
+    "school": "University of California, Berkeley",
+    "country": "United States",
+    "departments": [
+      "Department of Statistics",
+      "Division of Biostatistics"
+    ],
+    "seed_urls": [
+      "https://statistics.berkeley.edu/people/faculty",
+      "https://publichealth.berkeley.edu/academics/biostatistics/faculty"
+    ]
+  },
+  {
+    "school": "University of Washington",
+    "country": "United States",
+    "departments": [
+      "Department of Statistics",
+      "Department of Biostatistics"
+    ],
+    "seed_urls": [
+      "https://stat.uw.edu/about-us/people/faculty",
+      "https://www.biostat.washington.edu/people/faculty"
+    ]
+  },
+  {
+    "school": "University of Chicago",
+    "country": "United States",
+    "departments": [
+      "Department of Statistics",
+      "Department of Public Health Sciences (Biostatistics)"
+    ],
+    "seed_urls": [
+      "https://stat.uchicago.edu/people/#faculty"
+    ]
+  },
+  {
+    "school": "Johns Hopkins University",
+    "country": "United States",
+    "departments": [
+      "Department of Biostatistics (Bloomberg SPH)",
+      "Department of Applied Mathematics and Statistics"
+    ],
+    "seed_urls": [
+      "https://publichealth.jhu.edu/departments/biostatistics/people/faculty",
+      "https://engineering.jhu.edu/ams/faculty/"
+    ]
+  },
+  {
+    "school": "University of Michigan",
+    "country": "United States",
+    "departments": [
+      "Department of Statistics",
+      "Department of Biostatistics"
+    ],
+    "seed_urls": [
+      "https://lsa.umich.edu/stats/people/faculty.html",
+      "https://sph.umich.edu/biostat/faculty/"
+    ]
+  },
+  {
+    "school": "University of North Carolina at Chapel Hill",
+    "country": "United States",
+    "departments": [
+      "Department of Statistics and Operations Research",
+      "Department of Biostatistics (Gillings SPH)"
+    ],
+    "seed_urls": [
+      "https://stor.unc.edu/faculty-directory/",
+      "https://sph.unc.edu/bios/biostatistics-faculty-and-staff/"
+    ]
+  },
+  {
+    "school": "North Carolina State University",
+    "country": "United States",
+    "departments": [
+      "Department of Statistics"
+    ],
+    "seed_urls": [
+      "https://statistics.sciences.ncsu.edu/people/faculty/"
+    ]
+  },
+  {
+    "school": "Columbia University",
+    "country": "United States",
+    "departments": [
+      "Department of Statistics",
+      "Department of Biostatistics (Mailman SPH)"
+    ],
+    "seed_urls": [
+      "https://stat.columbia.edu/department-directory/faculty-and-lecturers/",
+      "https://www.publichealth.columbia.edu/academics/departments/biostatistics/directory"
+    ]
+  },
+  {
+    "school": "University of Pennsylvania",
+    "country": "United States",
+    "departments": [
+      "Department of Statistics and Data Science (Wharton)",
+      "Department of Biostatistics, Epidemiology and Informatics"
+    ],
+    "seed_urls": [
+      "https://statistics.wharton.upenn.edu/faculty/faculty-list/",
+      "https://www.med.upenn.edu/cceb/biostatistics-faculty.html"
+    ]
+  },
+  {
+    "school": "Carnegie Mellon University",
+    "country": "United States",
+    "departments": [
+      "Department of Statistics & Data Science"
+    ],
+    "seed_urls": [
+      "https://www.cmu.edu/dietrich/statistics-datascience/faculty/index.html"
+    ]
+  },
+  {
+    "school": "Duke University",
+    "country": "United States",
+    "departments": [
+      "Department of Statistical Science",
+      "Department of Biostatistics and Bioinformatics"
+    ],
+    "seed_urls": [
+      "https://stat.duke.edu/people/appointed-faculty",
+      "https://biostat.duke.edu/faculty"
+    ]
+  },
+  {
+    "school": "Cornell University",
+    "country": "United States",
+    "departments": [
+      "Department of Statistics and Data Science",
+      "Division of Biostatistics"
+    ],
+    "seed_urls": [
+      "https://stat.cornell.edu/people/faculty"
+    ]
+  },
+  {
+    "school": "University of Wisconsin-Madison",
+    "country": "United States",
+    "departments": [
+      "Department of Statistics",
+      "Department of Biostatistics and Medical Informatics"
+    ],
+    "seed_urls": [
+      "https://stat.wisc.edu/people-faculty/",
+      "https://www.biostat.wisc.edu/People-Faculty"
+    ]
+  },
+  {
+    "school": "University of Minnesota",
+    "country": "United States",
+    "departments": [
+      "School of Statistics",
+      "Division of Biostatistics & Health Data Science"
+    ],
+    "seed_urls": [
+      "https://cla.umn.edu/statistics/people/faculty",
+      "https://www.sph.umn.edu/academics/divisions/biostatistics/directory/"
+    ]
+  },
+  {
+    "school": "University of California, San Diego",
+    "country": "United States",
+    "departments": [
+      "Halıcıoğlu Data Science Institute",
+      "Division of Biostatistics and Bioinformatics",
+      "Department of Mathematics (Statistics)"
+    ],
+    "seed_urls": [
+      "https://datascience.ucsd.edu/about/people/faculty/",
+      "https://ph.ucsd.edu/biostat/faculty/",
+      "https://math.ucsd.edu/people/faculty"
+    ]
+  },
+  {
+    "school": "University of California, Los Angeles",
+    "country": "United States",
+    "departments": [
+      "Department of Statistics and Data Science",
+      "Department of Biostatistics (Fielding SPH)"
+    ],
+    "seed_urls": [
+      "https://statistics.ucla.edu/people/faculty/",
+      "https://ph.ucla.edu/about/departments/department-biostatistics/faculty"
+    ]
+  },
+  {
+    "school": "University of California, Davis",
+    "country": "United States",
+    "departments": [
+      "Department of Statistics",
+      "Graduate Group in Biostatistics"
+    ],
+    "seed_urls": [
+      "https://statistics.ucdavis.edu/people/faculty"
+    ]
+  },
+  {
+    "school": "University of California, Santa Barbara",
+    "country": "United States",
+    "departments": [
+      "Department of Statistics and Applied Probability"
+    ],
+    "seed_urls": [
+      "https://www.pstat.ucsb.edu/people/academic"
+    ]
+  },
+  {
+    "school": "University of California, Irvine",
+    "country": "United States",
+    "departments": [
+      "Department of Statistics"
+    ],
+    "seed_urls": [
+      "https://www.stat.uci.edu/faculty/"
+    ]
+  },
+  {
+    "school": "University of California, Santa Cruz",
+    "country": "United States",
+    "departments": [
+      "Department of Statistics"
+    ],
+    "seed_urls": [
+      "https://statistics.ucsc.edu/people/faculty.html"
+    ]
+  },
+  {
+    "school": "University of California, Riverside",
+    "country": "United States",
+    "departments": [
+      "Department of Statistics"
+    ],
+    "seed_urls": [
+      "https://statistics.ucr.edu/faculty"
+    ]
+  },
+  {
+    "school": "University of California, San Francisco",
+    "country": "United States",
+    "departments": [
+      "Department of Epidemiology and Biostatistics"
+    ],
+    "seed_urls": [
+      "https://epibiostat.ucsf.edu/faculty"
+    ]
+  },
+  {
+    "school": "Iowa State University",
+    "country": "United States",
+    "departments": [
+      "Department of Statistics"
+    ],
+    "seed_urls": [
+      "https://www.stat.iastate.edu/people/faculty"
+    ]
+  },
+  {
+    "school": "Purdue University",
+    "country": "United States",
+    "departments": [
+      "Department of Statistics"
+    ],
+    "seed_urls": [
+      "https://www.stat.purdue.edu/people/faculty/index.html"
+    ]
+  },
+  {
+    "school": "Texas A&M University",
+    "country": "United States",
+    "departments": [
+      "Department of Statistics"
+    ],
+    "seed_urls": [
+      "https://stat.tamu.edu/people/faculty/"
+    ]
+  },
+  {
+    "school": "Ohio State University",
+    "country": "United States",
+    "departments": [
+      "Department of Statistics",
+      "Division of Biostatistics"
+    ],
+    "seed_urls": [
+      "https://stat.osu.edu/people/faculty"
+    ]
+  },
+  {
+    "school": "Pennsylvania State University",
+    "country": "United States",
+    "departments": [
+      "Department of Statistics"
+    ],
+    "seed_urls": [
+      "https://science.psu.edu/stat/people/faculty"
+    ]
+  },
+  {
+    "school": "University of Illinois Urbana-Champaign",
+    "country": "United States",
+    "departments": [
+      "Department of Statistics"
+    ],
+    "seed_urls": [
+      "https://stat.illinois.edu/directory/faculty"
+    ]
+  },
+  {
+    "school": "Virginia Tech",
+    "country": "United States",
+    "departments": [
+      "Department of Statistics"
+    ],
+    "seed_urls": [
+      "https://www.stat.vt.edu/people/stat-faculty.html"
+    ]
+  },
+  {
+    "school": "Rutgers University",
+    "country": "United States",
+    "departments": [
+      "Department of Statistics",
+      "Department of Biostatistics and Epidemiology"
+    ],
+    "seed_urls": [
+      "https://statistics.rutgers.edu/people-pages/faculty"
+    ]
+  },
+  {
+    "school": "Princeton University",
+    "country": "United States",
+    "departments": [
+      "Department of Operations Research and Financial Engineering (Statistics)",
+      "Center for Statistics and Machine Learning"
+    ],
+    "seed_urls": [
+      "https://orfe.princeton.edu/people/faculty",
+      "https://csml.princeton.edu/people/faculty"
+    ]
+  },
+  {
+    "school": "Massachusetts Institute of Technology",
+    "country": "United States",
+    "departments": [
+      "Statistics and Data Science Center (IDSS)",
+      "Department of Mathematics (Statistics & Probability)"
+    ],
+    "seed_urls": [
+      "https://stat.mit.edu/people/faculty/",
+      "https://math.mit.edu/directory/faculty/"
+    ]
+  },
+  {
+    "school": "California Institute of Technology",
+    "country": "United States",
+    "departments": [
+      "Department of Computing and Mathematical Sciences"
+    ],
+    "seed_urls": [
+      "https://www.cms.caltech.edu/people"
+    ]
+  },
+  {
+    "school": "Yale University",
+    "country": "United States",
+    "departments": [
+      "Department of Statistics and Data Science",
+      "Department of Biostatistics (YSPH)"
+    ],
+    "seed_urls": [
+      "https://statistics.yale.edu/people/faculty",
+      "https://ysph.yale.edu/public-health-research-and-practice/department-research/biostatistics/people/"
+    ]
+  },
+  {
+    "school": "Brown University",
+    "country": "United States",
+    "departments": [
+      "Department of Biostatistics",
+      "Division of Applied Mathematics"
+    ],
+    "seed_urls": [
+      "https://biostatistics.sph.brown.edu/people/faculty",
+      "https://appliedmath.brown.edu/people/faculty"
+    ]
+  },
+  {
+    "school": "New York University",
+    "country": "United States",
+    "departments": [
+      "Tech/Stern Statistics Group",
+      "Courant Institute (Probability & Statistics)",
+      "Division of Biostatistics"
+    ],
+    "seed_urls": [
+      "https://www.stern.nyu.edu/experience-stern/about/departments-centers-initiatives/academic-departments/top-stats/faculty"
+    ]
+  },
+  {
+    "school": "Northwestern University",
+    "country": "United States",
+    "departments": [
+      "Department of Statistics and Data Science",
+      "Division of Biostatistics"
+    ],
+    "seed_urls": [
+      "https://statistics.northwestern.edu/people/faculty/"
+    ]
+  },
+  {
+    "school": "Emory University",
+    "country": "United States",
+    "departments": [
+      "Department of Biostatistics and Bioinformatics (Rollins SPH)"
+    ],
+    "seed_urls": [
+      "https://sph.emory.edu/departments/bios/faculty/index.html"
+    ]
+  },
+  {
+    "school": "University of Pittsburgh",
+    "country": "United States",
+    "departments": [
+      "Department of Statistics",
+      "Department of Biostatistics"
+    ],
+    "seed_urls": [
+      "https://www.stat.pitt.edu/people/faculty",
+      "https://www.sph.pitt.edu/biostatistics/directory"
+    ]
+  },
+  {
+    "school": "Boston University",
+    "country": "United States",
+    "departments": [
+      "Department of Mathematics and Statistics",
+      "Department of Biostatistics (BUSPH)"
+    ],
+    "seed_urls": [
+      "https://www.bu.edu/math/people/faculty/",
+      "https://www.bu.edu/sph/about/departments/biostatistics/faculty-and-staff/"
+    ]
+  },
+  {
+    "school": "Rice University",
+    "country": "United States",
+    "departments": [
+      "Department of Statistics"
+    ],
+    "seed_urls": [
+      "https://statistics.rice.edu/people/faculty"
+    ]
+  },
+  {
+    "school": "University of Florida",
+    "country": "United States",
+    "departments": [
+      "Department of Statistics",
+      "Department of Biostatistics"
+    ],
+    "seed_urls": [
+      "https://stat.ufl.edu/people/faculty/",
+      "https://biostat.ufl.edu/about/people/faculty/"
+    ]
+  },
+  {
+    "school": "Florida State University",
+    "country": "United States",
+    "departments": [
+      "Department of Statistics"
+    ],
+    "seed_urls": [
+      "https://stat.fsu.edu/people/faculty"
+    ]
+  },
+  {
+    "school": "University of Connecticut",
+    "country": "United States",
+    "departments": [
+      "Department of Statistics"
+    ],
+    "seed_urls": [
+      "https://stat.uconn.edu/faculty/"
+    ]
+  },
+  {
+    "school": "University of Georgia",
+    "country": "United States",
+    "departments": [
+      "Department of Statistics",
+      "Department of Epidemiology & Biostatistics"
+    ],
+    "seed_urls": [
+      "https://www.stat.uga.edu/directory/faculty"
+    ]
+  },
+  {
+    "school": "University of Iowa",
+    "country": "United States",
+    "departments": [
+      "Department of Statistics and Actuarial Science",
+      "Department of Biostatistics"
+    ],
+    "seed_urls": [
+      "https://stat.uiowa.edu/people/faculty",
+      "https://www.public-health.uiowa.edu/biostat-faculty-list/"
+    ]
+  },
+  {
+    "school": "Indiana University",
+    "country": "United States",
+    "departments": [
+      "Department of Statistics",
+      "Department of Biostatistics and Health Data Science"
+    ],
+    "seed_urls": [
+      "https://stat.indiana.edu/about/faculty/index.html"
+    ]
+  },
+  {
+    "school": "Michigan State University",
+    "country": "United States",
+    "departments": [
+      "Department of Statistics and Probability"
+    ],
+    "seed_urls": [
+      "https://stt.natsci.msu.edu/directory/faculty/"
+    ]
+  },
+  {
+    "school": "University of Texas at Austin",
+    "country": "United States",
+    "departments": [
+      "Department of Statistics and Data Sciences"
+    ],
+    "seed_urls": [
+      "https://stat.utexas.edu/directory/faculty"
+    ]
+  },
+  {
+    "school": "University of Texas Health Science Center at Houston",
+    "country": "United States",
+    "departments": [
+      "Department of Biostatistics and Data Science (UTHealth / MD Anderson)"
+    ],
+    "seed_urls": []
+  },
+  {
+    "school": "Vanderbilt University",
+    "country": "United States",
+    "departments": [
+      "Department of Biostatistics"
+    ],
+    "seed_urls": [
+      "https://www.vumc.org/biostatistics/person-type/faculty"
+    ]
+  },
+  {
+    "school": "University of Rochester",
+    "country": "United States",
+    "departments": [
+      "Department of Biostatistics and Computational Biology",
+      "Department of Statistics"
+    ],
+    "seed_urls": [
+      "https://www.urmc.rochester.edu/biostatistics/people/faculty.aspx"
+    ]
+  },
+  {
+    "school": "Washington University in St. Louis",
+    "country": "United States",
+    "departments": [
+      "Department of Statistics and Data Science",
+      "Division of Biostatistics"
+    ],
+    "seed_urls": [
+      "https://sds.wustl.edu/people"
+    ]
+  },
+  {
+    "school": "University of Maryland",
+    "country": "United States",
+    "departments": [
+      "Statistics Program (Dept of Mathematics)",
+      "Joint Program in Survey Methodology"
+    ],
+    "seed_urls": []
+  },
+  {
+    "school": "Colorado State University",
+    "country": "United States",
+    "departments": [
+      "Department of Statistics"
+    ],
+    "seed_urls": [
+      "https://statistics.colostate.edu/people/"
+    ]
+  },
+  {
+    "school": "University of Colorado Anschutz Medical Campus",
+    "country": "United States",
+    "departments": [
+      "Department of Biostatistics and Informatics"
+    ],
+    "seed_urls": []
+  },
+  {
+    "school": "University of Colorado Boulder",
+    "country": "United States",
+    "departments": [
+      "Department of Applied Mathematics (Statistics)"
+    ],
+    "seed_urls": []
+  },
+  {
+    "school": "Oregon State University",
+    "country": "United States",
+    "departments": [
+      "Department of Statistics"
+    ],
+    "seed_urls": [
+      "https://stat.oregonstate.edu/people/faculty"
+    ]
+  },
+  {
+    "school": "University of Missouri",
+    "country": "United States",
+    "departments": [
+      "Department of Statistics"
+    ],
+    "seed_urls": [
+      "https://statistics.missouri.edu/people/faculty"
+    ]
+  },
+  {
+    "school": "Kansas State University",
+    "country": "United States",
+    "departments": [
+      "Department of Statistics"
+    ],
+    "seed_urls": [
+      "https://www.k-state.edu/stats/about/people/faculty.html"
+    ]
+  },
+  {
+    "school": "Oklahoma State University",
+    "country": "United States",
+    "departments": [
+      "Department of Statistics"
+    ],
+    "seed_urls": []
+  },
+  {
+    "school": "University of Arizona",
+    "country": "United States",
+    "departments": [
+      "Statistics and Data Science GIDP",
+      "Department of Epidemiology and Biostatistics"
+    ],
+    "seed_urls": []
+  },
+  {
+    "school": "Arizona State University",
+    "country": "United States",
+    "departments": [
+      "School of Mathematical and Statistical Sciences"
+    ],
+    "seed_urls": []
+  },
+  {
+    "school": "University of New Mexico",
+    "country": "United States",
+    "departments": [
+      "Department of Mathematics and Statistics"
+    ],
+    "seed_urls": []
+  },
+  {
+    "school": "University of Utah",
+    "country": "United States",
+    "departments": [
+      "Division of Biostatistics",
+      "Department of Mathematics"
+    ],
+    "seed_urls": []
+  },
+  {
+    "school": "Utah State University",
+    "country": "United States",
+    "departments": [
+      "Department of Mathematics and Statistics"
+    ],
+    "seed_urls": []
+  },
+  {
+    "school": "Brigham Young University",
+    "country": "United States",
+    "departments": [
+      "Department of Statistics"
+    ],
+    "seed_urls": []
+  },
+  {
+    "school": "Montana State University",
+    "country": "United States",
+    "departments": [
+      "Department of Mathematical Sciences (Statistics)"
+    ],
+    "seed_urls": []
+  },
+  {
+    "school": "University of Nebraska-Lincoln",
+    "country": "United States",
+    "departments": [
+      "Department of Statistics"
+    ],
+    "seed_urls": [
+      "https://statistics.unl.edu/faculty-person-type/faculty"
+    ]
+  },
+  {
+    "school": "North Dakota State University",
+    "country": "United States",
+    "departments": [
+      "Department of Statistics"
+    ],
+    "seed_urls": []
+  },
+  {
+    "school": "South Dakota State University",
+    "country": "United States",
+    "departments": [
+      "Department of Mathematics and Statistics"
+    ],
+    "seed_urls": []
+  },
+  {
+    "school": "Baylor University",
+    "country": "United States",
+    "departments": [
+      "Department of Statistical Science"
+    ],
+    "seed_urls": [
+      "https://statistics.artsandsciences.baylor.edu/people/faculty"
+    ]
+  },
+  {
+    "school": "Southern Methodist University",
+    "country": "United States",
+    "departments": [
+      "Department of Statistical Science"
+    ],
+    "seed_urls": [
+      "https://www.smu.edu/dedman/academics/departments/statistics/people/faculty"
+    ]
+  },
+  {
+    "school": "George Mason University",
+    "country": "United States",
+    "departments": [
+      "Department of Statistics"
+    ],
+    "seed_urls": [
+      "https://statistics.gmu.edu/people/faculty"
+    ]
+  },
+  {
+    "school": "George Washington University",
+    "country": "United States",
+    "departments": [
+      "Department of Statistics",
+      "Department of Biostatistics and Bioinformatics"
+    ],
+    "seed_urls": [
+      "https://statistics.columbian.gwu.edu/faculty"
+    ]
+  },
+  {
+    "school": "American University",
+    "country": "United States",
+    "departments": [
+      "Department of Mathematics and Statistics"
+    ],
+    "seed_urls": []
+  },
+  {
+    "school": "Temple University",
+    "country": "United States",
+    "departments": [
+      "Department of Statistics, Operations, and Data Science"
+    ],
+    "seed_urls": []
+  },
+  {
+    "school": "Drexel University",
+    "country": "United States",
+    "departments": [
+      "Department of Epidemiology and Biostatistics"
+    ],
+    "seed_urls": []
+  },
+  {
+    "school": "University of Southern California",
+    "country": "United States",
+    "departments": [
+      "Department of Data Sciences and Operations",
+      "Division of Biostatistics"
+    ],
+    "seed_urls": []
+  },
+  {
+    "school": "University of Alabama at Birmingham",
+    "country": "United States",
+    "departments": [
+      "Department of Biostatistics"
+    ],
+    "seed_urls": []
+  },
+  {
+    "school": "University of Alabama",
+    "country": "United States",
+    "departments": [
+      "Applied Statistics Program"
+    ],
+    "seed_urls": []
+  },
+  {
+    "school": "Auburn University",
+    "country": "United States",
+    "departments": [
+      "Department of Mathematics and Statistics"
+    ],
+    "seed_urls": []
+  },
+  {
+    "school": "Louisiana State University",
+    "country": "United States",
+    "departments": [
+      "Department of Experimental Statistics"
+    ],
+    "seed_urls": []
+  },
+  {
+    "school": "Tulane University",
+    "country": "United States",
+    "departments": [
+      "Department of Biostatistics and Data Science"
+    ],
+    "seed_urls": []
+  },
+  {
+    "school": "University of Kentucky",
+    "country": "United States",
+    "departments": [
+      "Dr. Bing Zhang Department of Statistics",
+      "Department of Biostatistics"
+    ],
+    "seed_urls": [
+      "https://stat.as.uky.edu/users/faculty"
+    ]
+  },
+  {
+    "school": "University of Louisville",
+    "country": "United States",
+    "departments": [
+      "Department of Bioinformatics and Biostatistics"
+    ],
+    "seed_urls": []
+  },
+  {
+    "school": "University of South Carolina",
+    "country": "United States",
+    "departments": [
+      "Department of Statistics",
+      "Department of Epidemiology and Biostatistics"
+    ],
+    "seed_urls": [
+      "https://sc.edu/study/colleges_schools/artsandsciences/statistics/our_people/index.php"
+    ]
+  },
+  {
+    "school": "Medical University of South Carolina",
+    "country": "United States",
+    "departments": [
+      "Department of Public Health Sciences (Biostatistics)"
+    ],
+    "seed_urls": []
+  },
+  {
+    "school": "Clemson University",
+    "country": "United States",
+    "departments": [
+      "School of Mathematical and Statistical Sciences"
+    ],
+    "seed_urls": []
+  },
+  {
+    "school": "Virginia Commonwealth University",
+    "country": "United States",
+    "departments": [
+      "Department of Biostatistics"
+    ],
+    "seed_urls": []
+  },
+  {
+    "school": "University of Virginia",
+    "country": "United States",
+    "departments": [
+      "Department of Statistics"
+    ],
+    "seed_urls": [
+      "https://statistics.as.virginia.edu/faculty"
+    ]
+  },
+  {
+    "school": "University of Massachusetts Amherst",
+    "country": "United States",
+    "departments": [
+      "Department of Mathematics and Statistics",
+      "Department of Biostatistics and Epidemiology"
+    ],
+    "seed_urls": []
+  },
+  {
+    "school": "University at Buffalo (SUNY)",
+    "country": "United States",
+    "departments": [
+      "Department of Biostatistics"
+    ],
+    "seed_urls": [
+      "https://publichealth.buffalo.edu/biostatistics/faculty-and-staff/faculty-directory.html"
+    ]
+  },
+  {
+    "school": "Stony Brook University",
+    "country": "United States",
+    "departments": [
+      "Department of Applied Mathematics and Statistics"
+    ],
+    "seed_urls": []
+  },
+  {
+    "school": "University at Albany (SUNY)",
+    "country": "United States",
+    "departments": [
+      "Department of Epidemiology and Biostatistics"
+    ],
+    "seed_urls": []
+  },
+  {
+    "school": "Binghamton University (SUNY)",
+    "country": "United States",
+    "departments": [
+      "Department of Mathematical Sciences (Statistics)"
+    ],
+    "seed_urls": []
+  },
+  {
+    "school": "University of Illinois at Chicago",
+    "country": "United States",
+    "departments": [
+      "Department of Mathematics, Statistics, and Computer Science",
+      "Division of Epidemiology and Biostatistics"
+    ],
+    "seed_urls": []
+  },
+  {
+    "school": "Northern Illinois University",
+    "country": "United States",
+    "departments": [
+      "Department of Mathematical Sciences (Statistics)"
+    ],
+    "seed_urls": []
+  },
+  {
+    "school": "Case Western Reserve University",
+    "country": "United States",
+    "departments": [
+      "Department of Population and Quantitative Health Sciences (Biostatistics)",
+      "Department of Mathematics, Applied Mathematics, and Statistics"
+    ],
+    "seed_urls": []
+  },
+  {
+    "school": "University of Cincinnati",
+    "country": "United States",
+    "departments": [
+      "Division of Biostatistics and Bioinformatics"
+    ],
+    "seed_urls": []
+  },
+  {
+    "school": "Bowling Green State University",
+    "country": "United States",
+    "departments": [
+      "Department of Mathematics and Statistics"
+    ],
+    "seed_urls": []
+  },
+  {
+    "school": "Miami University",
+    "country": "United States",
+    "departments": [
+      "Department of Statistics"
+    ],
+    "seed_urls": []
+  },
+  {
+    "school": "Western Michigan University",
+    "country": "United States",
+    "departments": [
+      "Department of Statistics"
+    ],
+    "seed_urls": []
+  },
+  {
+    "school": "Central Michigan University",
+    "country": "United States",
+    "departments": [
+      "Department of Statistics, Actuarial and Data Sciences"
+    ],
+    "seed_urls": []
+  },
+  {
+    "school": "Wayne State University",
+    "country": "United States",
+    "departments": [
+      "Department of Mathematics (Statistics)"
+    ],
+    "seed_urls": []
+  },
+  {
+    "school": "Medical College of Wisconsin",
+    "country": "United States",
+    "departments": [
+      "Division of Biostatistics"
+    ],
+    "seed_urls": []
+  },
+  {
+    "school": "University of Notre Dame",
+    "country": "United States",
+    "departments": [
+      "Department of Applied and Computational Mathematics and Statistics"
+    ],
+    "seed_urls": [
+      "https://acms.nd.edu/people/faculty/"
+    ]
+  },
+  {
+    "school": "Worcester Polytechnic Institute",
+    "country": "United States",
+    "departments": [
+      "Department of Mathematical Sciences (Statistics)"
+    ],
+    "seed_urls": []
+  },
+  {
+    "school": "University of Maryland, Baltimore County",
+    "country": "United States",
+    "departments": [
+      "Department of Mathematics and Statistics"
+    ],
+    "seed_urls": []
+  },
+  {
+    "school": "University of Delaware",
+    "country": "United States",
+    "departments": [
+      "Department of Applied Economics and Statistics"
+    ],
+    "seed_urls": []
+  },
+  {
+    "school": "Georgia Institute of Technology",
+    "country": "United States",
+    "departments": [
+      "H. Milton Stewart School of Industrial and Systems Engineering (Statistics)"
+    ],
+    "seed_urls": []
+  },
+  {
+    "school": "Georgia State University",
+    "country": "United States",
+    "departments": [
+      "Department of Mathematics and Statistics",
+      "Department of Population Health Sciences (Biostatistics)"
+    ],
+    "seed_urls": []
+  },
+  {
+    "school": "University of Central Florida",
+    "country": "United States",
+    "departments": [
+      "Department of Statistics and Data Science"
+    ],
+    "seed_urls": []
+  },
+  {
+    "school": "University of South Florida",
+    "country": "United States",
+    "departments": [
+      "College of Public Health (Biostatistics)"
+    ],
+    "seed_urls": []
+  },
+  {
+    "school": "University of Miami",
+    "country": "United States",
+    "departments": [
+      "Division of Biostatistics"
+    ],
+    "seed_urls": []
+  },
+  {
+    "school": "University of Toronto",
+    "country": "Canada",
+    "departments": [
+      "Department of Statistical Sciences",
+      "Division of Biostatistics (Dalla Lana SPH)"
+    ],
+    "seed_urls": [
+      "https://www.statistics.utoronto.ca/people/directories/all-faculty"
+    ]
+  },
+  {
+    "school": "University of Waterloo",
+    "country": "Canada",
+    "departments": [
+      "Department of Statistics and Actuarial Science"
+    ],
+    "seed_urls": [
+      "https://uwaterloo.ca/statistics-and-actuarial-science/profiles"
+    ]
+  },
+  {
+    "school": "University of British Columbia",
+    "country": "Canada",
+    "departments": [
+      "Department of Statistics"
+    ],
+    "seed_urls": [
+      "https://www.stat.ubc.ca/users/faculty"
+    ]
+  },
+  {
+    "school": "McGill University",
+    "country": "Canada",
+    "departments": [
+      "Department of Mathematics and Statistics",
+      "Department of Epidemiology, Biostatistics and Occupational Health"
+    ],
+    "seed_urls": [
+      "https://www.mcgill.ca/epi-biostat-occh/faculty-0"
+    ]
+  },
+  {
+    "school": "Simon Fraser University",
+    "country": "Canada",
+    "departments": [
+      "Department of Statistics and Actuarial Science"
+    ],
+    "seed_urls": [
+      "https://www.sfu.ca/stat-actsci/faculty-and-staff/faculty.html"
+    ]
+  },
+  {
+    "school": "Western University",
+    "country": "Canada",
+    "departments": [
+      "Department of Statistical and Actuarial Sciences"
+    ],
+    "seed_urls": []
+  },
+  {
+    "school": "University of Alberta",
+    "country": "Canada",
+    "departments": [
+      "Department of Mathematical and Statistical Sciences"
+    ],
+    "seed_urls": []
+  },
+  {
+    "school": "Université de Montréal",
+    "country": "Canada",
+    "departments": [
+      "Département de mathématiques et de statistique"
+    ],
+    "seed_urls": []
+  },
+  {
+    "school": "Queen's University",
+    "country": "Canada",
+    "departments": [
+      "Department of Mathematics and Statistics"
+    ],
+    "seed_urls": []
+  },
+  {
+    "school": "University of Ottawa",
+    "country": "Canada",
+    "departments": [
+      "Department of Mathematics and Statistics"
+    ],
+    "seed_urls": []
+  },
+  {
+    "school": "University of Calgary",
+    "country": "Canada",
+    "departments": [
+      "Department of Mathematics and Statistics"
+    ],
+    "seed_urls": []
+  },
+  {
+    "school": "Université Laval",
+    "country": "Canada",
+    "departments": [
+      "Département de mathématiques et de statistique"
+    ],
+    "seed_urls": []
+  },
+  {
+    "school": "University of Manitoba",
+    "country": "Canada",
+    "departments": [
+      "Department of Statistics"
+    ],
+    "seed_urls": []
+  },
+  {
+    "school": "Carleton University",
+    "country": "Canada",
+    "departments": [
+      "School of Mathematics and Statistics"
+    ],
+    "seed_urls": []
+  },
+  {
+    "school": "University of Oxford",
+    "country": "United Kingdom",
+    "departments": [
+      "Department of Statistics"
+    ],
+    "seed_urls": [
+      "https://www.stats.ox.ac.uk/people/academic_staff"
+    ]
+  },
+  {
+    "school": "University of Cambridge",
+    "country": "United Kingdom",
+    "departments": [
+      "Statistical Laboratory (DPMMS)"
+    ],
+    "seed_urls": [
+      "https://www.statslab.cam.ac.uk/people"
+    ]
+  },
+  {
+    "school": "Imperial College London",
+    "country": "United Kingdom",
+    "departments": [
+      "Statistics Section (Dept of Mathematics)",
+      "School of Public Health (Biostatistics)"
+    ],
+    "seed_urls": [
+      "https://www.imperial.ac.uk/statistics/staff/"
+    ]
+  },
+  {
+    "school": "London School of Economics and Political Science",
+    "country": "United Kingdom",
+    "departments": [
+      "Department of Statistics"
+    ],
+    "seed_urls": [
+      "https://www.lse.ac.uk/statistics/people"
+    ]
+  },
+  {
+    "school": "University College London",
+    "country": "United Kingdom",
+    "departments": [
+      "Department of Statistical Science"
+    ],
+    "seed_urls": [
+      "https://www.ucl.ac.uk/statistics/people/academic-and-teaching-staff"
+    ]
+  },
+  {
+    "school": "London School of Hygiene & Tropical Medicine",
+    "country": "United Kingdom",
+    "departments": [
+      "Department of Medical Statistics"
+    ],
+    "seed_urls": []
+  },
+  {
+    "school": "University of Warwick",
+    "country": "United Kingdom",
+    "departments": [
+      "Department of Statistics"
+    ],
+    "seed_urls": [
+      "https://warwick.ac.uk/fac/sci/statistics/staff/academic-research/"
+    ]
+  },
+  {
+    "school": "University of Edinburgh",
+    "country": "United Kingdom",
+    "departments": [
+      "Statistics Group (School of Mathematics)"
+    ],
+    "seed_urls": []
+  },
+  {
+    "school": "University of Bristol",
+    "country": "United Kingdom",
+    "departments": [
+      "Institute for Statistical Science"
+    ],
+    "seed_urls": []
+  },
+  {
+    "school": "Lancaster University",
+    "country": "United Kingdom",
+    "departments": [
+      "Department of Mathematics and Statistics",
+      "CHICAS (Biostatistics)"
+    ],
+    "seed_urls": []
+  },
+  {
+    "school": "University of Bath",
+    "country": "United Kingdom",
+    "departments": [
+      "Department of Mathematical Sciences (Statistics & Probability)"
+    ],
+    "seed_urls": []
+  },
+  {
+    "school": "University of Manchester",
+    "country": "United Kingdom",
+    "departments": [
+      "Probability and Statistics Group",
+      "Centre for Biostatistics"
+    ],
+    "seed_urls": []
+  },
+  {
+    "school": "University of Glasgow",
+    "country": "United Kingdom",
+    "departments": [
+      "School of Mathematics and Statistics"
+    ],
+    "seed_urls": []
+  },
+  {
+    "school": "University of Nottingham",
+    "country": "United Kingdom",
+    "departments": [
+      "Statistics and Probability Group"
+    ],
+    "seed_urls": []
+  },
+  {
+    "school": "University of Southampton",
+    "country": "United Kingdom",
+    "departments": [
+      " Southampton Statistical Sciences Research Institute"
+    ],
+    "seed_urls": []
+  },
+  {
+    "school": "Durham University",
+    "country": "United Kingdom",
+    "departments": [
+      "Department of Mathematical Sciences (Statistics)"
+    ],
+    "seed_urls": []
+  },
+  {
+    "school": "University of St Andrews",
+    "country": "United Kingdom",
+    "departments": [
+      "School of Mathematics and Statistics (CREEM)"
+    ],
+    "seed_urls": []
+  },
+  {
+    "school": "Trinity College Dublin",
+    "country": "Ireland",
+    "departments": [
+      "Discipline of Statistics and Information Systems"
+    ],
+    "seed_urls": []
+  },
+  {
+    "school": "ETH Zürich",
+    "country": "Switzerland",
+    "departments": [
+      "Seminar for Statistics (SfS)",
+      "Probability Group"
+    ],
+    "seed_urls": [
+      "https://stat.ethz.ch/people.html"
+    ]
+  },
+  {
+    "school": "EPFL",
+    "country": "Switzerland",
+    "departments": [
+      "Institute of Mathematics (Chair of Statistics / Probability)"
+    ],
+    "seed_urls": []
+  },
+  {
+    "school": "Sorbonne Université",
+    "country": "France",
+    "departments": [
+      "LPSM (Laboratoire de Probabilités, Statistique et Modélisation)"
+    ],
+    "seed_urls": []
+  },
+  {
+    "school": "Université Paris-Saclay",
+    "country": "France",
+    "departments": [
+      "Laboratoire de Mathématiques d'Orsay (Probabilités & Statistique)",
+      "ENSAE / CREST"
+    ],
+    "seed_urls": []
+  },
+  {
+    "school": "École Normale Supérieure",
+    "country": "France",
+    "departments": [
+      "Département de Mathématiques et Applications"
+    ],
+    "seed_urls": []
+  },
+  {
+    "school": "École Polytechnique",
+    "country": "France",
+    "departments": [
+      "CMAP (Probabilités & Statistique)"
+    ],
+    "seed_urls": []
+  },
+  {
+    "school": "Université de Toulouse",
+    "country": "France",
+    "departments": [
+      "Institut de Mathématiques de Toulouse (Statistique & Probabilités)"
+    ],
+    "seed_urls": []
+  },
+  {
+    "school": "Leiden University",
+    "country": "Netherlands",
+    "departments": [
+      "Mathematical Institute (Statistics & Probability)",
+      "Medical Statistics"
+    ],
+    "seed_urls": []
+  },
+  {
+    "school": "University of Amsterdam",
+    "country": "Netherlands",
+    "departments": [
+      "Korteweg-de Vries Institute (Stochastics)"
+    ],
+    "seed_urls": []
+  },
+  {
+    "school": "Delft University of Technology",
+    "country": "Netherlands",
+    "departments": [
+      "Delft Institute of Applied Mathematics (Statistics & Probability)"
+    ],
+    "seed_urls": []
+  },
+  {
+    "school": "Eindhoven University of Technology",
+    "country": "Netherlands",
+    "departments": [
+      "Stochastics Section"
+    ],
+    "seed_urls": []
+  },
+  {
+    "school": "KU Leuven",
+    "country": "Belgium",
+    "departments": [
+      "Leuven Statistics Research Centre (LStat)"
+    ],
+    "seed_urls": []
+  },
+  {
+    "school": "UCLouvain",
+    "country": "Belgium",
+    "departments": [
+      "Institute of Statistics, Biostatistics and Actuarial Sciences (ISBA)"
+    ],
+    "seed_urls": []
+  },
+  {
+    "school": "University of Copenhagen",
+    "country": "Denmark",
+    "departments": [
+      "Department of Mathematical Sciences (Statistics & Probability)",
+      "Section of Biostatistics"
+    ],
+    "seed_urls": []
+  },
+  {
+    "school": "Aarhus University",
+    "country": "Denmark",
+    "departments": [
+      "Department of Mathematics (Stochastics)"
+    ],
+    "seed_urls": []
+  },
+  {
+    "school": "Stockholm University",
+    "country": "Sweden",
+    "departments": [
+      "Department of Mathematics (Mathematical Statistics)"
+    ],
+    "seed_urls": []
+  },
+  {
+    "school": "KTH Royal Institute of Technology",
+    "country": "Sweden",
+    "departments": [
+      "Division of Mathematical Statistics"
+    ],
+    "seed_urls": []
+  },
+  {
+    "school": "University of Oslo",
+    "country": "Norway",
+    "departments": [
+      "Statistics and Data Science Group"
+    ],
+    "seed_urls": []
+  },
+  {
+    "school": "University of Helsinki",
+    "country": "Finland",
+    "departments": [
+      "Statistics and Probability Group"
+    ],
+    "seed_urls": []
+  },
+  {
+    "school": "Technical University of Munich",
+    "country": "Germany",
+    "departments": [
+      "Chair of Mathematical Statistics"
+    ],
+    "seed_urls": []
+  },
+  {
+    "school": "Ludwig-Maximilians-Universität München",
+    "country": "Germany",
+    "departments": [
+      "Department of Statistics"
+    ],
+    "seed_urls": []
+  },
+  {
+    "school": "University of Bonn",
+    "country": "Germany",
+    "departments": [
+      "Institute for Applied Mathematics (Probability & Stochastics)"
+    ],
+    "seed_urls": []
+  },
+  {
+    "school": "Ruprecht-Karls-Universität Heidelberg",
+    "country": "Germany",
+    "departments": [
+      "Institute for Applied Mathematics (Stochastics)"
+    ],
+    "seed_urls": []
+  },
+  {
+    "school": "Georg-August-Universität Göttingen",
+    "country": "Germany",
+    "departments": [
+      "Institute for Mathematical Stochastics"
+    ],
+    "seed_urls": []
+  },
+  {
+    "school": "Bocconi University",
+    "country": "Italy",
+    "departments": [
+      "Department of Decision Sciences (Statistics)"
+    ],
+    "seed_urls": []
+  },
+  {
+    "school": "Università degli Studi di Padova",
+    "country": "Italy",
+    "departments": [
+      "Department of Statistical Sciences"
+    ],
+    "seed_urls": []
+  },
+  {
+    "school": "Universidad Carlos III de Madrid",
+    "country": "Spain",
+    "departments": [
+      "Department of Statistics"
+    ],
+    "seed_urls": []
+  },
+  {
+    "school": "Indian Statistical Institute",
+    "country": "India",
+    "departments": [
+      "Stat-Math Unit & Applied Statistics Unit (Kolkata, Delhi, Bangalore)"
+    ],
+    "seed_urls": []
+  },
+  {
+    "school": "National University of Singapore",
+    "country": "Singapore",
+    "departments": [
+      "Department of Statistics and Data Science"
+    ],
+    "seed_urls": [
+      "https://www.stat.nus.edu.sg/people/faculty-members/"
+    ]
+  },
+  {
+    "school": "Nanyang Technological University",
+    "country": "Singapore",
+    "departments": [
+      "Division of Mathematical Sciences (Statistics)"
+    ],
+    "seed_urls": []
+  },
+  {
+    "school": "University of Hong Kong",
+    "country": "Hong Kong",
+    "departments": [
+      "Department of Statistics and Actuarial Science"
+    ],
+    "seed_urls": [
+      "https://saasweb.hku.hk/people/academic.php"
+    ]
+  },
+  {
+    "school": "Hong Kong University of Science and Technology",
+    "country": "Hong Kong",
+    "departments": [
+      "Department of ISOM (Statistics) & Mathematics"
+    ],
+    "seed_urls": []
+  },
+  {
+    "school": "Chinese University of Hong Kong",
+    "country": "Hong Kong",
+    "departments": [
+      "Department of Statistics"
+    ],
+    "seed_urls": [
+      "https://www.sta.cuhk.edu.hk/peoples/academic-staff/"
+    ]
+  },
+  {
+    "school": "Peking University",
+    "country": "China",
+    "departments": [
+      "School of Mathematical Sciences (Dept of Probability & Statistics)",
+      "Center for Statistical Science"
+    ],
+    "seed_urls": []
+  },
+  {
+    "school": "Tsinghua University",
+    "country": "China",
+    "departments": [
+      "Department of Statistics and Data Science"
+    ],
+    "seed_urls": []
+  },
+  {
+    "school": "University of Science and Technology of China",
+    "country": "China",
+    "departments": [
+      "Department of Statistics and Finance"
+    ],
+    "seed_urls": []
+  },
+  {
+    "school": "Fudan University",
+    "country": "China",
+    "departments": [
+      "Department of Statistics and Data Science"
+    ],
+    "seed_urls": []
+  },
+  {
+    "school": "Renmin University of China",
+    "country": "China",
+    "departments": [
+      "School of Statistics",
+      "Institute of Statistics and Big Data"
+    ],
+    "seed_urls": []
+  },
+  {
+    "school": "Shanghai Jiao Tong University",
+    "country": "China",
+    "departments": [
+      "Department of Statistics"
+    ],
+    "seed_urls": []
+  },
+  {
+    "school": "Zhejiang University",
+    "country": "China",
+    "departments": [
+      "School of Mathematical Sciences (Statistics)"
+    ],
+    "seed_urls": []
+  },
+  {
+    "school": "National Taiwan University",
+    "country": "Taiwan",
+    "departments": [
+      "Institute of Statistical Science / Math"
+    ],
+    "seed_urls": []
+  },
+  {
+    "school": "University of Tokyo",
+    "country": "Japan",
+    "departments": [
+      "Mathematical Informatics / Statistics"
+    ],
+    "seed_urls": []
+  },
+  {
+    "school": "Institute of Statistical Mathematics",
+    "country": "Japan",
+    "departments": [
+      "Department of Statistical Methodology"
+    ],
+    "seed_urls": []
+  },
+  {
+    "school": "Seoul National University",
+    "country": "South Korea",
+    "departments": [
+      "Department of Statistics"
+    ],
+    "seed_urls": []
+  },
+  {
+    "school": "KAIST",
+    "country": "South Korea",
+    "departments": [
+      "Department of Mathematical Sciences (Probability & Statistics)"
+    ],
+    "seed_urls": []
+  },
+  {
+    "school": "Yonsei University",
+    "country": "South Korea",
+    "departments": [
+      "Department of Statistics and Data Science"
+    ],
+    "seed_urls": []
+  },
+  {
+    "school": "Australian National University",
+    "country": "Australia",
+    "departments": [
+      "Research School of Finance, Actuarial Studies and Statistics"
+    ],
+    "seed_urls": []
+  },
+  {
+    "school": "University of Melbourne",
+    "country": "Australia",
+    "departments": [
+      "School of Mathematics and Statistics"
+    ],
+    "seed_urls": []
+  },
+  {
+    "school": "University of Sydney",
+    "country": "Australia",
+    "departments": [
+      "School of Mathematics and Statistics"
+    ],
+    "seed_urls": []
+  },
+  {
+    "school": "University of New South Wales",
+    "country": "Australia",
+    "departments": [
+      "School of Mathematics and Statistics"
+    ],
+    "seed_urls": []
+  },
+  {
+    "school": "Monash University",
+    "country": "Australia",
+    "departments": [
+      "Department of Econometrics and Business Statistics"
+    ],
+    "seed_urls": []
+  },
+  {
+    "school": "Technion – Israel Institute of Technology",
+    "country": "Israel",
+    "departments": [
+      "Faculty of Data and Decision Sciences (Statistics)"
+    ],
+    "seed_urls": []
+  },
+  {
+    "school": "Tel Aviv University",
+    "country": "Israel",
+    "departments": [
+      "Department of Statistics and Operations Research"
+    ],
+    "seed_urls": []
+  },
+  {
+    "school": "Hebrew University of Jerusalem",
+    "country": "Israel",
+    "departments": [
+      "Department of Statistics and Data Science"
+    ],
+    "seed_urls": []
+  },
+  {
+    "school": "Weizmann Institute of Science",
+    "country": "Israel",
+    "departments": [
+      "Department of Computer Science and Applied Mathematics"
+    ],
+    "seed_urls": []
+  },
+  {
+    "school": "IMPA",
+    "country": "Brazil",
+    "departments": [
+      "Probability and Statistics"
+    ],
+    "seed_urls": []
+  },
+  {
+    "school": "Universidade de São Paulo",
+    "country": "Brazil",
+    "departments": [
+      "Department of Statistics (IME-USP)"
+    ],
+    "seed_urls": []
+  },
+  {
+    "school": "Pontificia Universidad Católica de Chile",
+    "country": "Chile",
+    "departments": [
+      "Department of Statistics"
+    ],
+    "seed_urls": []
+  }
+]

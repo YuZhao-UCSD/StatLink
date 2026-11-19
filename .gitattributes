@@ -1,0 +1,3 @@
+*.part* binary
+*.gz binary
+*.db binary
