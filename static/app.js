@@ -11,6 +11,9 @@
     query: "",
     school: "",
     schoolRole: "both",
+    ancestorId: null,
+    ancestorName: "",
+    ancestorMode: "all",
     yearMin: "",
     yearMax: "",
     sort: "relevance",
@@ -67,6 +70,38 @@
     return str.length > maxLen ? str.slice(0, maxLen - 1) + "…" : str;
   }
 
+  function getInitials(name) {
+    if (!name) return "?";
+    const cleaned = String(name)
+      .replace(/\(.*?\)/g, " ")
+      .replace(/,\s*(jr\.?|sr\.?|ii|iii|iv)\b/gi, " ")
+      .replace(/\b(sir|lord|lady|baron|dr\.?|prof\.?|rev\.?)\b/gi, " ")
+      .trim();
+    const parts = cleaned.split(/\s+/).filter((w) => /[A-Za-zÀ-ÖØ-öø-ÿ]/.test(w));
+    if (!parts.length) return "?";
+    const firstChar = (s) => {
+      const m = s.match(/[A-Za-zÀ-ÖØ-öø-ÿ]/);
+      return m ? m[0].toUpperCase() : "";
+    };
+    if (parts.length === 1) return firstChar(parts[0]) || "?";
+    return (firstChar(parts[0]) + firstChar(parts[parts.length - 1])) || "?";
+  }
+
+  function renderAvatarHtml(p, sizeClass = "avatar-lg") {
+    const initials = esc(getInitials(p.name));
+    const field = esc(p.primary_field || "Mathematics & Other");
+    const url = (p.photo_url || "").trim();
+    if (url) {
+      return `<div class="person-avatar ${sizeClass}" data-field="${field}">
+        <span class="avatar-initials">${initials}</span>
+        <img class="avatar-img" src="${esc(url)}" alt="${esc(p.name)}" loading="lazy" referrerpolicy="no-referrer" onerror="this.remove()" />
+      </div>`;
+    }
+    return `<div class="person-avatar ${sizeClass}" data-field="${field}">
+      <span class="avatar-initials">${initials}</span>
+    </div>`;
+  }
+
   function debounce(fn, ms) {
     let timer = null;
     return (...args) => {
@@ -76,10 +111,203 @@
   }
 
   // -------------------------------------------------------------------------
-  // View & Theme Switching
+  // Browser History (Google-SERP-Style Back / Forward Navigation) & Views
   // -------------------------------------------------------------------------
-  function switchView(viewName) {
+  let isRestoringHistory = false;
+  let lastHistoryKey = "";
+
+  function captureHistorySnapshot() {
+    return {
+      currentView: state.currentView,
+      scope: state.scope,
+      query: state.query,
+      school: state.school,
+      schoolRole: state.schoolRole,
+      ancestorId: state.ancestorId,
+      ancestorName: state.ancestorName,
+      ancestorMode: state.ancestorMode,
+      yearMin: state.yearMin,
+      yearMax: state.yearMax,
+      sort: state.sort,
+      browseMode: state.browseMode,
+      page: state.page,
+      focalId: state.focalId,
+      upDepth: state.upDepth,
+      downDepth: state.downDepth,
+    };
+  }
+
+  function buildHistoryUrl(snap) {
+    if (snap.currentView === "tree") {
+      return `/#person=${snap.focalId}`;
+    }
+    if (snap.currentView === "kinship") {
+      return "/#kinship";
+    }
+    if (snap.currentView === "sources") {
+      return "/#sources";
+    }
+    const isHome =
+      !snap.query &&
+      !snap.school &&
+      !snap.ancestorId &&
+      !snap.yearMin &&
+      !snap.yearMax &&
+      snap.scope === "core" &&
+      !snap.browseMode;
+    if (isHome) {
+      return "/";
+    }
+    const p = new URLSearchParams();
+    if (snap.query) p.set("q", snap.query);
+    if (snap.school) {
+      p.set("school", snap.school);
+      if (snap.schoolRole && snap.schoolRole !== "both") p.set("role", snap.schoolRole);
+    }
+    if (snap.ancestorId) {
+      p.set("anc", String(snap.ancestorId));
+      if (snap.ancestorName) p.set("anc_name", snap.ancestorName);
+      if (snap.ancestorMode && snap.ancestorMode !== "all") p.set("anc_mode", snap.ancestorMode);
+    }
+    if (snap.yearMin) p.set("ymin", snap.yearMin);
+    if (snap.yearMax) p.set("ymax", snap.yearMax);
+    if (snap.scope && snap.scope !== "core") p.set("scope", snap.scope);
+    if (snap.sort && snap.sort !== "relevance") p.set("sort", snap.sort);
+    if (snap.page && snap.page > 1) p.set("page", String(snap.page));
+    if (snap.browseMode && !p.toString()) p.set("browse", "1");
+    return `/#search?${p.toString()}`;
+  }
+
+  function commitHistoryState(replace = false) {
+    if (isRestoringHistory) return;
+    const snap = captureHistorySnapshot();
+    const key = JSON.stringify(snap);
+    const url = buildHistoryUrl(snap);
+    if (!replace && key === lastHistoryKey) return;
+    lastHistoryKey = key;
+    if (replace) {
+      window.history.replaceState(snap, "", url);
+    } else {
+      window.history.pushState(snap, "", url);
+    }
+  }
+
+  function syncSearchDomFromState() {
+    const mainInp = document.getElementById("mainSearchInput");
+    if (mainInp) mainInp.value = state.query || "";
+    document.getElementById("clearSearchBtn")?.classList.toggle("hidden", !state.query);
+
+    const schInp = document.getElementById("schoolFilterInput");
+    if (schInp) schInp.value = state.school || "";
+    document.getElementById("clearSchoolBtn")?.classList.toggle("hidden", !state.school);
+
+    document.querySelectorAll("#schoolRoleGroup .era-chip").forEach((c) => {
+      c.classList.toggle("active", c.dataset.srole === state.schoolRole);
+    });
+
+    const ancInp = document.getElementById("ancestorFilterInput");
+    if (ancInp) ancInp.value = state.ancestorName || "";
+    document.getElementById("clearAncestorBtn")?.classList.toggle("hidden", !state.ancestorId && !state.ancestorName);
+
+    document.querySelectorAll("#ancestorModeGroup .era-chip").forEach((c) => {
+      c.classList.toggle("active", c.dataset.amode === (state.ancestorMode || "all"));
+    });
+
+    const yminInp = document.getElementById("yearMinInput");
+    if (yminInp) yminInp.value = state.yearMin || "";
+    const ymaxInp = document.getElementById("yearMaxInput");
+    if (ymaxInp) ymaxInp.value = state.yearMax || "";
+
+    document.querySelectorAll(".era-chip[data-ymin]").forEach((c) => {
+      c.classList.toggle("active", c.dataset.ymin === state.yearMin && c.dataset.ymax === state.yearMax && Boolean(state.yearMin || state.yearMax));
+    });
+
+    const sortSel = document.getElementById("sortSelect");
+    if (sortSel) sortSel.value = state.sort || "relevance";
+
+    document.querySelectorAll(".scope-pill").forEach((b) => {
+      b.classList.toggle("active", b.dataset.scope === state.scope);
+    });
+  }
+
+  const DEFAULT_UP_DEPTH = 6;
+  const DEFAULT_DOWN_DEPTH = 2;
+
+  function syncDepthLabels() {
+    const ancTxt = state.upDepth >= 45 ? "All" : String(state.upDepth);
+    const descTxt = String(state.downDepth);
+    const ancEl = document.getElementById("ancDepthVal");
+    const descEl = document.getElementById("descDepthVal");
+    const pillEl = document.getElementById("depthPillLabel");
+    if (ancEl) {
+      if ("value" in ancEl) ancEl.value = ancTxt;
+      else ancEl.textContent = ancTxt;
+    }
+    if (descEl) {
+      if ("value" in descEl) descEl.value = descTxt;
+      else descEl.textContent = descTxt;
+    }
+    if (pillEl) pillEl.textContent = `${ancTxt}↑ · ${descTxt}↓`;
+  }
+
+  function resetTreeDepthToDefault() {
+    state.upDepth = DEFAULT_UP_DEPTH;
+    state.downDepth = DEFAULT_DOWN_DEPTH;
+    syncDepthLabels();
+  }
+
+  function closeTreeDepthPopover() {
+    const pop = document.getElementById("treeDepthPopover");
+    const btn = document.getElementById("treeDepthToggleBtn");
+    if (pop) pop.classList.add("hidden");
+    if (btn) btn.setAttribute("aria-expanded", "false");
+  }
+
+  async function restoreHistoryState(snap) {
+    if (!snap) return;
+    isRestoringHistory = true;
+    try {
+      state.scope = snap.scope || "core";
+      state.query = snap.query || "";
+      state.school = snap.school || "";
+      state.schoolRole = snap.schoolRole || "both";
+      state.ancestorId = snap.ancestorId ? Number(snap.ancestorId) : null;
+      state.ancestorName = snap.ancestorName || "";
+      state.ancestorMode = snap.ancestorMode || "all";
+      state.yearMin = snap.yearMin || "";
+      state.yearMax = snap.yearMax || "";
+      state.sort = snap.sort || "relevance";
+      state.browseMode = Boolean(snap.browseMode);
+      state.page = snap.page || 1;
+      if (snap.focalId) state.focalId = snap.focalId;
+      if (snap.upDepth !== undefined) state.upDepth = snap.upDepth;
+      if (snap.downDepth !== undefined) state.downDepth = snap.downDepth;
+      syncDepthLabels();
+
+      closeMainSearchDropdown();
+      closeTreeDepthPopover();
+      toggleMobileFilters(false);
+      syncSearchDomFromState();
+
+      const targetView = snap.currentView || "explore";
+      if (targetView === "explore") {
+        switchView("explore", { skipHistory: true });
+        await executeSearch({ skipHistory: true });
+      } else if (targetView === "tree") {
+        switchView("tree", { skipHistory: true });
+      } else {
+        switchView(targetView, { skipHistory: true });
+      }
+      lastHistoryKey = JSON.stringify(captureHistorySnapshot());
+    } finally {
+      isRestoringHistory = false;
+    }
+  }
+
+  function switchView(viewName, opts = {}) {
     state.currentView = viewName;
+    document.body.setAttribute("data-active-view", viewName);
+    if (viewName !== "tree") closeTreeDepthPopover();
     document.querySelectorAll(".view-section").forEach((el) => {
       el.classList.toggle("active", el.id === `view-${viewName}`);
     });
@@ -87,9 +315,13 @@
       btn.classList.toggle("active", btn.dataset.view === viewName);
     });
 
+    if (!opts.skipHistory) {
+      commitHistoryState(Boolean(opts.replaceHistory));
+    }
+
     if (viewName === "tree") {
       if (!state.treeData || state.treeData.focal_id !== state.focalId) {
-        loadPersonTree(state.focalId);
+        loadPersonTree(state.focalId, { skipHistory: true });
       } else {
         setTimeout(() => renderGenealogyGraph("#treeSvg", state.treeData, true), 40);
       }
@@ -99,7 +331,7 @@
   }
 
   function initTheme() {
-    const saved = localStorage.getItem("statlineage_theme") || "light";
+    const saved = localStorage.getItem("statlink_theme") || localStorage.getItem("statlineage_theme") || "light";
     setTheme(saved);
     document.getElementById("themeToggleBtn").addEventListener("click", () => {
       const curr = document.documentElement.getAttribute("data-theme") || "light";
@@ -109,7 +341,7 @@
 
   function setTheme(theme) {
     document.documentElement.setAttribute("data-theme", theme);
-    localStorage.setItem("statlineage_theme", theme);
+    localStorage.setItem("statlink_theme", theme);
     document.getElementById("themeIconSun").classList.toggle("hidden", theme === "light");
     document.getElementById("themeIconMoon").classList.toggle("hidden", theme === "dark");
     if (state.currentView === "sources" && state.globalStats) {
@@ -201,8 +433,8 @@
         document.querySelectorAll("#schoolRoleGroup .era-chip").forEach((c) => {
           c.classList.toggle("active", c.dataset.srole === state.schoolRole);
         });
+        switchView("explore", { skipHistory: true });
         applySchoolFilter(btn.dataset.school);
-        switchView("explore");
       });
     });
   }
@@ -264,8 +496,8 @@
       .join("");
     lb.querySelectorAll(".person-row-btn").forEach((btn) => {
       btn.addEventListener("click", () => {
+        switchView("explore", { skipHistory: true });
         applySchoolFilter(btn.dataset.school);
-        switchView("explore");
       });
     });
 
@@ -393,7 +625,15 @@
   // Directory Search, School Autocomplete & Filtering
   // -------------------------------------------------------------------------
   function isExploreHomeState() {
-    return !state.query && !state.school && !state.yearMin && !state.yearMax && state.scope === "core" && !state.browseMode;
+    return (
+      !state.query &&
+      !state.school &&
+      !state.ancestorId &&
+      !state.yearMin &&
+      !state.yearMax &&
+      state.scope === "core" &&
+      !state.browseMode
+    );
   }
 
   function syncExploreLayoutMode() {
@@ -407,6 +647,10 @@
   function resetToSearchHome() {
     state.query = "";
     state.school = "";
+    state.schoolRole = "both";
+    state.ancestorId = null;
+    state.ancestorName = "";
+    state.ancestorMode = "all";
     state.yearMin = "";
     state.yearMax = "";
     state.scope = "core";
@@ -420,6 +664,11 @@
     const schInp = document.getElementById("schoolFilterInput");
     if (schInp) schInp.value = "";
     document.getElementById("clearSchoolBtn")?.classList.add("hidden");
+    document.getElementById("schoolDropdown")?.classList.add("hidden");
+    const ancInp = document.getElementById("ancestorFilterInput");
+    if (ancInp) ancInp.value = "";
+    document.getElementById("clearAncestorBtn")?.classList.add("hidden");
+    document.getElementById("ancestorDropdown")?.classList.add("hidden");
     const yminInp = document.getElementById("yearMinInput");
     if (yminInp) yminInp.value = "";
     const ymaxInp = document.getElementById("yearMaxInput");
@@ -427,17 +676,56 @@
     const sortSel = document.getElementById("sortSelect");
     if (sortSel) sortSel.value = "relevance";
 
+    document.querySelectorAll("#schoolRoleGroup .era-chip").forEach((c) => {
+      c.classList.toggle("active", c.dataset.srole === "both");
+    });
+    document.querySelectorAll("#ancestorModeGroup .era-chip").forEach((c) => {
+      c.classList.toggle("active", c.dataset.amode === "all");
+    });
     document.querySelectorAll(".era-chip[data-ymin]").forEach((c) => c.classList.remove("active"));
     document.querySelectorAll(".scope-pill").forEach((b) => {
       b.classList.toggle("active", b.dataset.scope === "core");
     });
+    closeMainSearchDropdown();
     toggleMobileFilters(false);
     executeSearch();
   }
 
-  async function executeSearch() {
+  let sugReqSeq = 0;
+  let activeSugIdx = -1;
+  let typedBeforeArrows = "";
+
+  function closeMainSearchDropdown() {
+    const drop = document.getElementById("mainSearchDropdown");
+    const wrap = document.getElementById("mainSearchBoxWrap");
+    if (drop) {
+      drop.classList.add("hidden");
+      drop.innerHTML = "";
+    }
+    if (wrap) wrap.classList.remove("dropdown-open");
+    activeSugIdx = -1;
+  }
+
+  function submitMainSearch(queryText) {
+    sugReqSeq++; // invalidate any in-flight suggestion fetch
+    closeMainSearchDropdown();
+    const q = (queryText || "").trim();
+    const mainInp = document.getElementById("mainSearchInput");
+    if (mainInp) mainInp.value = q;
+    document.getElementById("clearSearchBtn")?.classList.toggle("hidden", !q);
+    state.query = q;
+    if (!q) state.browseMode = true;
+    state.page = 1;
+    executeSearch();
+  }
+
+  async function executeSearch(opts = {}) {
     syncExploreLayoutMode();
     renderActiveFilterTags();
+
+    if (!opts.skipHistory && state.currentView === "explore") {
+      commitHistoryState(Boolean(opts.replaceHistory));
+    }
 
     if (isExploreHomeState()) {
       const grid = document.getElementById("resultsGrid");
@@ -460,6 +748,10 @@
       params.set("school", state.school);
       params.set("school_role", state.schoolRole);
     }
+    if (state.ancestorId) {
+      params.set("ancestor_id", String(state.ancestorId));
+      params.set("ancestor_mode", state.ancestorMode || "all");
+    }
     if (state.yearMin) params.set("year_min", state.yearMin);
     if (state.yearMax) params.set("year_max", state.yearMax);
 
@@ -469,6 +761,11 @@
     try {
       const resp = await fetch(`/api/search?${params.toString()}`);
       const data = await resp.json();
+      if (state.ancestorId && data.ancestor && data.ancestor.id === state.ancestorId && !state.ancestorName) {
+        state.ancestorName = data.ancestor.name || "";
+        syncSearchDomFromState();
+        renderActiveFilterTags();
+      }
       renderSearchResults(data);
     } catch (err) {
       summaryEl.textContent = "Error loading search results.";
@@ -482,11 +779,13 @@
     const results = data.results || [];
     const total = data.total || 0;
 
-    let sumTxt = `Showing ${fmtNum(results.length)} of ${fmtNum(total)} PhD scholars`;
-    if (data.expanded_from_all) {
-      sumTxt += " (including exact matches across all mathematical & connected fields)";
+    let sumHtml = `Showing ${fmtNum(results.length)} of ${fmtNum(total)} PhD scholars`;
+    if (data.fuzzy_query) {
+      sumHtml += ` · <span style="color:var(--accent);">Showing fuzzy matches for “${esc(data.fuzzy_query)}”</span>`;
+    } else if (data.expanded_from_all) {
+      sumHtml += " (including matches across all mathematical & connected fields)";
     }
-    summaryEl.textContent = sumTxt;
+    summaryEl.innerHTML = sumHtml;
 
     if (!results.length) {
       grid.innerHTML = `
@@ -528,15 +827,25 @@
           : "";
 
         const selfStar = p.famous_self ? `<span title="${esc(p.famous_self.epithet)}" style="color:var(--gold-main);margin-right:3px;">★</span>` : "";
+        const genDownHtml = p.ancestor_generations
+          ? ` · <span style="color:var(--accent);font-weight:600;" title="${p.ancestor_generations} generation${p.ancestor_generations === 1 ? "" : "s"} below ${esc(state.ancestorName || data.ancestor?.name || "selected scholar")}">${p.ancestor_generations} gen${p.ancestor_generations === 1 ? "" : "s"} ↓</span>`
+          : "";
+        const descMetricHtml =
+          p.descendant_count > 0
+            ? `<button type="button" class="desc-filter-inline" data-ancid="${p.id}" data-ancname="${esc(p.name)}" title="Filter by academic descendants of ${esc(p.name)}">🌳 ${fmtNum(p.descendant_count)} desc.</button>`
+            : `<span title="Total Academic Descendants">🌳 0 desc.</span>`;
 
         return `
         <article class="scholar-card" data-pid="${p.id}" data-field="${esc(p.primary_field)}">
           <div>
             <div class="card-top">
-              <h3 class="scholar-name">${selfStar}${esc(p.name)}</h3>
+              <div style="display:flex;align-items:center;gap:10px;min-width:0;">
+                ${renderAvatarHtml(p, "avatar-md")}
+                <h3 class="scholar-name">${selfStar}${esc(p.name)}</h3>
+              </div>
               <span class="field-pill" data-field="${esc(p.primary_field)}">${esc(p.primary_field)}</span>
             </div>
-            <div class="scholar-meta">${schHtml} · <strong>${yrStr}</strong>${p.country ? " · " + esc(p.country) : ""}</div>
+            <div class="scholar-meta" style="margin-top:6px;">${schHtml} · <strong>${yrStr}</strong>${p.country ? " · " + esc(p.country) : ""}${genDownHtml}</div>
             ${affilNote}
           </div>
           ${thesisHtml}
@@ -544,7 +853,7 @@
           <div class="card-footer">
             <div class="lineage-metrics">
               <span title="Direct PhD Students">🎓 ${fmtNum(p.student_count)} students</span>
-              <span title="Total Academic Descendants">🌳 ${fmtNum(p.descendant_count)} desc.</span>
+              ${descMetricHtml}
             </div>
             <span class="view-tree-cta" title="Sources: ${esc(srcBadges)}">View Tree →</span>
           </div>
@@ -558,6 +867,13 @@
         if (schTarget) {
           e.stopPropagation();
           applySchoolFilter(schTarget.dataset.school);
+          return;
+        }
+        const descTarget = e.target.closest(".desc-filter-inline");
+        if (descTarget) {
+          e.stopPropagation();
+          applyAncestorFilter(Number(descTarget.dataset.ancid), descTarget.dataset.ancname, "all");
+          window.scrollTo({ top: 0, behavior: "smooth" });
           return;
         }
         const ancChip = e.target.closest(".famous-preview-chip");
@@ -627,6 +943,12 @@
     if (state.school) {
       tags.push(`<span class="filter-tag">School: ${esc(state.school)} <button data-clear="school">&times;</button></span>`);
     }
+    if (state.ancestorId) {
+      const ancLabel = state.ancestorMode === "direct" ? "Student of" : "Descendant of";
+      tags.push(
+        `<span class="filter-tag">${ancLabel}: ${esc(state.ancestorName || "#" + state.ancestorId)} <button data-clear="ancestor">&times;</button></span>`
+      );
+    }
     if (state.yearMin || state.yearMax) {
       tags.push(
         `<span class="filter-tag">Years: ${esc(state.yearMin || "…")}–${esc(state.yearMax || "…")} <button data-clear="year">&times;</button></span>`
@@ -645,6 +967,7 @@
       btn.addEventListener("click", () => {
         const kind = btn.dataset.clear;
         if (kind === "school") applySchoolFilter("");
+        if (kind === "ancestor") applyAncestorFilter(null, "");
         if (kind === "year") {
           state.yearMin = "";
           state.yearMax = "";
@@ -671,6 +994,23 @@
     executeSearch();
   }
 
+  function applyAncestorFilter(ancId, ancName, modeOverride = null) {
+    state.ancestorId = ancId ? Number(ancId) : null;
+    state.ancestorName = state.ancestorId ? ancName || "" : "";
+    if (modeOverride) {
+      state.ancestorMode = modeOverride;
+    }
+    state.page = 1;
+    const inp = document.getElementById("ancestorFilterInput");
+    if (inp) inp.value = state.ancestorName;
+    document.getElementById("clearAncestorBtn")?.classList.toggle("hidden", !state.ancestorId);
+    document.getElementById("ancestorDropdown")?.classList.add("hidden");
+    document.querySelectorAll("#ancestorModeGroup .era-chip").forEach((c) => {
+      c.classList.toggle("active", c.dataset.amode === (state.ancestorMode || "all"));
+    });
+    executeSearch();
+  }
+
   function setScope(newScope) {
     state.scope = newScope;
     state.page = 1;
@@ -684,6 +1024,9 @@
   // Interactive Family Tree Visualizer & Dossier
   // -------------------------------------------------------------------------
   async function openPersonInTree(personId, traceAncestorId = null) {
+    if (personId !== state.focalId || state.currentView !== "tree") {
+      resetTreeDepthToDefault();
+    }
     state.focalId = personId;
     state.pendingTraceAncestorId = traceAncestorId;
     if (state.currentView !== "tree") {
@@ -693,10 +1036,15 @@
     }
   }
 
-  async function loadPersonTree(personId) {
+  async function loadPersonTree(personId, opts = {}) {
     state.focalId = personId;
     state.selectedDossierId = personId;
     state.activeTraceAncestorId = null;
+
+    if (!opts.skipHistory && state.currentView === "tree") {
+      commitHistoryState(Boolean(opts.replaceHistory));
+    }
+
     const overlay = document.getElementById("treeLoadingOverlay");
     overlay.classList.remove("hidden");
 
@@ -732,7 +1080,6 @@
         renderGenealogyGraph("#treeSvg", treeData, true);
         updateTreeStatsBar(treeData);
       }
-      window.location.hash = `person=${personId}`;
     } catch (err) {
       console.error("Error loading tree:", err);
     } finally {
@@ -794,28 +1141,45 @@
     if (box) box.scrollTop = 0;
 
     const extLinks = [];
-    if (p.mgp_id) {
+    if (p.homepage) {
       extLinks.push(
-        `<a class="ext-pill" href="https://www.mathgenealogy.org/id.php?id=${p.mgp_id}" target="_blank" rel="noopener">MGP #${p.mgp_id} ↗</a>`
+        `<a class="ext-pill" href="${esc(p.homepage)}" target="_blank" rel="noopener" title="Personal / Faculty Website">Personal Website ↗</a>`
       );
     }
-    if (p.aft_pid) {
+    if (p.wikipedia_url) {
       extLinks.push(
-        `<a class="ext-pill" href="https://academictree.org/math/peopleinfo.php?pid=${p.aft_pid}" target="_blank" rel="noopener">AcademicTree #${p.aft_pid} ↗</a>`
+        `<a class="ext-pill" href="${esc(p.wikipedia_url)}" target="_blank" rel="noopener" title="Wikipedia Biography">Wikipedia ↗</a>`
       );
     }
-    if (p.wikidata_qid) {
+    if (p.google_scholar_url) {
       extLinks.push(
-        `<a class="ext-pill" href="https://www.wikidata.org/wiki/${esc(p.wikidata_qid)}" target="_blank" rel="noopener">Wikidata (${esc(p.wikidata_qid)}) ↗</a>`
+        `<a class="ext-pill" href="${esc(p.google_scholar_url)}" target="_blank" rel="noopener" title="Google Scholar Citations">Google Scholar ↗</a>`
+      );
+    }
+    if (p.linkedin_url) {
+      extLinks.push(
+        `<a class="ext-pill" href="${esc(p.linkedin_url)}" target="_blank" rel="noopener" title="LinkedIn Profile">LinkedIn ↗</a>`
       );
     }
     if (p.orcid) {
       extLinks.push(
-        `<a class="ext-pill" href="https://orcid.org/${esc(p.orcid)}" target="_blank" rel="noopener">ORCID ↗</a>`
+        `<a class="ext-pill" href="https://orcid.org/${esc(p.orcid)}" target="_blank" rel="noopener" title="ORCID ${esc(p.orcid)}">ORCID ↗</a>`
       );
     }
-    if (p.homepage) {
-      extLinks.push(`<a class="ext-pill" href="${esc(p.homepage)}" target="_blank" rel="noopener">Homepage ↗</a>`);
+    if (p.wikidata_qid) {
+      extLinks.push(
+        `<a class="ext-pill" href="https://www.wikidata.org/wiki/${esc(p.wikidata_qid)}" target="_blank" rel="noopener" title="Wikidata ${esc(p.wikidata_qid)}">Wikidata ↗</a>`
+      );
+    }
+    if (p.mgp_id) {
+      extLinks.push(
+        `<a class="ext-pill" href="https://www.mathgenealogy.org/id.php?id=${p.mgp_id}" target="_blank" rel="noopener" title="Mathematics Genealogy Project #${p.mgp_id}">MGP ↗</a>`
+      );
+    }
+    if (p.aft_pid) {
+      extLinks.push(
+        `<a class="ext-pill" href="https://academictree.org/math/peopleinfo.php?pid=${p.aft_pid}" target="_blank" rel="noopener" title="Academic Family Tree #${p.aft_pid}">AcademicTree ↗</a>`
+      );
     }
 
     const renderCompactRows = (arr, emptyMsg) => {
@@ -824,9 +1188,12 @@
         .map(
           (x) => `
           <button class="person-row-btn" data-pid="${x.id}">
-            <div>
-              <div class="pr-name">${x.famous_self ? '<span style="color:var(--gold-main);margin-right:3px;">★</span>' : ""}${esc(x.name)}</div>
-              <div class="pr-meta">${esc(x.school || "School unlisted")}${x.year ? " · " + x.year : ""}</div>
+            <div style="display:flex;align-items:center;gap:9px;min-width:0;">
+              ${renderAvatarHtml(x, "avatar-sm")}
+              <div style="min-width:0;">
+                <div class="pr-name">${x.famous_self ? '<span style="color:var(--gold-main);margin-right:3px;">★</span>' : ""}${esc(x.name)}</div>
+                <div class="pr-meta">${esc(x.school || "School unlisted")}${x.year ? " · " + x.year : ""}</div>
+              </div>
             </div>
             <span class="field-pill" data-field="${esc(x.primary_field)}">${x.descendant_count > 0 ? "🌳 " + fmtNum(x.descendant_count) : esc(x.primary_field.split(" ")[0])}</span>
           </button>`
@@ -840,13 +1207,18 @@
           <span class="field-pill" data-field="${esc(p.primary_field)}">${esc(p.primary_field)}</span>
           <span style="font-size:11px;color:var(--text-muted);" title="Classification provenance">${esc(p.classification_reason)}</span>
         </div>
-        <h2 class="dossier-title">${p.famous_self ? '<span style="color:var(--gold-main);margin-right:4px;">★</span>' : ""}${esc(p.name)}</h2>
-        <div class="dossier-sub">
-          ${p.school ? `<a href="#" class="school-link-inline" id="dossierSchoolLink" data-school="${esc(p.school)}">${esc(p.school)}</a>` : "Institution unlisted"}
-          ${p.year ? ` · <strong>PhD ${p.year}</strong>` : ""}
-          ${p.country ? ` · ${esc(p.country)}` : ""}
+        <div class="dossier-identity-row">
+          ${renderAvatarHtml(p, "avatar-lg")}
+          <div class="dossier-identity-text">
+            <h2 class="dossier-title">${p.famous_self ? '<span style="color:var(--gold-main);margin-right:4px;">★</span>' : ""}${esc(p.name)}</h2>
+            <div class="dossier-sub">
+              ${p.school ? `<a href="#" class="school-link-inline" id="dossierSchoolLink" data-school="${esc(p.school)}">${esc(p.school)}</a>` : "Institution unlisted"}
+              ${p.year ? ` · <strong>PhD ${p.year}</strong>` : ""}
+              ${p.country ? ` · ${esc(p.country)}` : ""}
+            </div>
+          </div>
         </div>
-        ${p.current_affiliation && p.current_affiliation !== p.school ? `<div style="font-size:12px;color:var(--text-muted);margin-top:3px;">Affiliation: ${esc(p.current_affiliation)}</div>` : ""}
+        ${p.current_affiliation && p.current_affiliation !== p.school ? `<div style="font-size:12px;color:var(--text-muted);margin-top:6px;">Affiliation: ${esc(p.current_affiliation)}</div>` : ""}
         ${p.research_areas ? `<div style="font-size:12px;color:var(--text-muted);margin-top:2px;">Areas: ${esc(p.research_areas)}</div>` : ""}
         ${p.famous_self ? `<div class="famous-self-banner">★ World-Famous Scientist — ${esc(p.famous_self.epithet)}</div>` : ""}
 
@@ -861,11 +1233,11 @@
           <div class="d-kpi-val">${fmtNum(p.advisor_count)}</div>
           <div class="d-kpi-lbl">PhD Advisors</div>
         </div>
-        <div class="d-kpi">
+        <div class="d-kpi ${p.student_count > 0 ? "is-clickable" : ""}" ${p.student_count > 0 ? `id="dossierStuKpi" title="Search all ${fmtNum(p.student_count)} direct PhD students of ${esc(p.name)}"` : ""}>
           <div class="d-kpi-val">${fmtNum(p.student_count)}</div>
           <div class="d-kpi-lbl">PhD Students</div>
         </div>
-        <div class="d-kpi">
+        <div class="d-kpi ${p.descendant_count > 0 ? "is-clickable" : ""}" ${p.descendant_count > 0 ? `id="dossierDescKpi" title="Search all ${fmtNum(p.descendant_count)} academic descendants of ${esc(p.name)}"` : ""}>
           <div class="d-kpi-val">${fmtNum(p.descendant_count)}</div>
           <div class="d-kpi-lbl">Total Descendants</div>
         </div>
@@ -883,7 +1255,7 @@
       ${
         extLinks.length
           ? `<div class="dossier-block">
-              <h4>Verified Source Records (${esc((p.sources || []).join(", "))})</h4>
+              <h4>Verified Source</h4>
               <div class="ext-links">${extLinks.join("")}</div>
             </div>`
           : ""
@@ -969,8 +1341,26 @@
 
     document.getElementById("dossierSchoolLink")?.addEventListener("click", (e) => {
       e.preventDefault();
+      switchView("explore", { skipHistory: true });
       applySchoolFilter(e.currentTarget.dataset.school);
-      switchView("explore");
+    });
+
+    document.getElementById("dossierStuKpi")?.addEventListener("click", () => {
+      state.query = "";
+      const mainInp = document.getElementById("mainSearchInput");
+      if (mainInp) mainInp.value = "";
+      document.getElementById("clearSearchBtn")?.classList.add("hidden");
+      switchView("explore", { skipHistory: true });
+      applyAncestorFilter(p.id, p.name, "direct");
+    });
+
+    document.getElementById("dossierDescKpi")?.addEventListener("click", () => {
+      state.query = "";
+      const mainInp = document.getElementById("mainSearchInput");
+      if (mainInp) mainInp.value = "";
+      document.getElementById("clearSearchBtn")?.classList.add("hidden");
+      switchView("explore", { skipHistory: true });
+      applyAncestorFilter(p.id, p.name, "all");
     });
 
     box.querySelectorAll(".person-row-btn[data-pid]").forEach((btn) => {
@@ -1530,6 +1920,132 @@
     clearBtn.addEventListener("click", () => applySchoolFilter(""));
   }
 
+  function setupAncestorAutocomplete() {
+    const inp = document.getElementById("ancestorFilterInput");
+    const drop = document.getElementById("ancestorDropdown");
+    const clearBtn = document.getElementById("clearAncestorBtn");
+    if (!inp || !drop || !clearBtn) return;
+
+    let reqSeq = 0;
+
+    const rankAncestorCandidates = (rows) =>
+      rows.slice().sort((a, b) => {
+        const aHas = (a.descendant_count || 0) > 0 ? 1 : 0;
+        const bHas = (b.descendant_count || 0) > 0 ? 1 : 0;
+        if (aHas !== bHas) return bHas - aHas;
+        return 0;
+      });
+
+    const fetchAncestors = debounce(async (val) => {
+      if (val.length < 2) {
+        drop.classList.add("hidden");
+        return;
+      }
+      const mySeq = ++reqSeq;
+      try {
+        const resp = await fetch(`/api/search?q=${encodeURIComponent(val)}&scope=all&per_page=12`);
+        const data = await resp.json();
+        if (mySeq !== reqSeq || document.activeElement !== inp) return;
+        const rows = rankAncestorCandidates(data.results || []);
+        if (!rows.length) {
+          drop.classList.add("hidden");
+          return;
+        }
+        drop.innerHTML = rows
+          .map((p) => {
+            const star = p.famous_self ? `<span style="color:var(--gold-main);margin-right:2px;">★</span>` : "";
+            const badge =
+              state.ancestorMode === "direct"
+                ? `🎓 ${fmtNum(p.student_count)} stu.`
+                : `🌳 ${fmtNum(p.descendant_count)} desc.`;
+            return `
+            <div class="ac-item" data-pid="${p.id}" data-pname="${esc(p.name)}">
+              <div>
+                <div class="ac-main">${star}${esc(p.name)}</div>
+                <div class="ac-sub">${esc(p.school || "School n/a")}${p.year ? " · " + p.year : ""} · ${esc(p.primary_field)}</div>
+              </div>
+              <span class="ac-count">${badge}</span>
+            </div>`;
+          })
+          .join("");
+        drop.classList.remove("hidden");
+        drop.querySelectorAll(".ac-item").forEach((el) => {
+          el.addEventListener("click", () => {
+            applyAncestorFilter(Number(el.dataset.pid), el.dataset.pname);
+          });
+        });
+      } catch (err) {
+        console.error("Ancestor autocomplete error:", err);
+      }
+    }, 180);
+
+    inp.addEventListener("focus", () => {
+      const val = inp.value.trim();
+      if (val.length >= 2) fetchAncestors(val);
+    });
+
+    inp.addEventListener("input", () => {
+      const val = inp.value.trim();
+      clearBtn.classList.toggle("hidden", !val && !state.ancestorId);
+      if (!val) {
+        reqSeq++;
+        drop.classList.add("hidden");
+        if (state.ancestorId) applyAncestorFilter(null, "");
+        return;
+      }
+      fetchAncestors(val);
+    });
+
+    inp.addEventListener("keydown", async (e) => {
+      if (e.key === "Enter") {
+        e.preventDefault();
+        reqSeq++;
+        const firstItem = !drop.classList.contains("hidden") ? drop.querySelector(".ac-item") : null;
+        drop.classList.add("hidden");
+        if (firstItem) {
+          applyAncestorFilter(Number(firstItem.dataset.pid), firstItem.dataset.pname);
+          return;
+        }
+        const val = inp.value.trim();
+        if (!val) {
+          applyAncestorFilter(null, "");
+          return;
+        }
+        try {
+          const resp = await fetch(`/api/search?q=${encodeURIComponent(val)}&scope=all&per_page=8`);
+          const data = await resp.json();
+          const ranked = rankAncestorCandidates(data.results || []);
+          if (ranked.length) {
+            applyAncestorFilter(ranked[0].id, ranked[0].name);
+          }
+        } catch (err) {
+          console.error("Ancestor Enter lookup failed:", err);
+        }
+      } else if (e.key === "Escape") {
+        drop.classList.add("hidden");
+      }
+    });
+
+    clearBtn.addEventListener("click", () => {
+      reqSeq++;
+      inp.value = "";
+      applyAncestorFilter(null, "");
+    });
+
+    document.querySelectorAll("#ancestorModeGroup .era-chip").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        state.ancestorMode = btn.dataset.amode || "all";
+        document.querySelectorAll("#ancestorModeGroup .era-chip").forEach((c) => {
+          c.classList.toggle("active", c.dataset.amode === state.ancestorMode);
+        });
+        if (state.ancestorId) {
+          state.page = 1;
+          executeSearch();
+        }
+      });
+    });
+  }
+
   function setupPersonQuickPicker(inputId, dropId, onSelect) {
     const inp = document.getElementById(inputId);
     const drop = document.getElementById(dropId);
@@ -1572,73 +2088,130 @@
   }
 
   // -------------------------------------------------------------------------
-  // Export SVG
-  // -------------------------------------------------------------------------
-  function exportTreeSvg() {
-    const svgEl = document.getElementById("treeSvg");
-    if (!svgEl) return;
-    const clone = svgEl.cloneNode(true);
-    clone.setAttribute("xmlns", "http://www.w3.org/2000/svg");
-    const styleEl = document.createElementNS("http://www.w3.org/2000/svg", "style");
-    styleEl.textContent = `
-      text { font-family: Inter, -apple-system, BlinkMacSystemFont, sans-serif; }
-      .tree-link { fill: none; stroke: #94a3b8; stroke-width: 1.65px; opacity: 0.75; }
-      .node-rect { fill: #ffffff; stroke: #cbd5e1; stroke-width: 1.4px; }
-      .focal .node-rect { stroke: #3b5bdb; stroke-width: 2.8px; }
-    `;
-    clone.prepend(styleEl);
-    const xml = new XMLSerializer().serializeToString(clone);
-    const blob = new Blob([xml], { type: "image/svg+xml;charset=utf-8" });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = `academic_tree_${state.focalId}.svg`;
-    document.body.appendChild(a);
-    a.click();
-    a.remove();
-    URL.revokeObjectURL(url);
-  }
-
-  // -------------------------------------------------------------------------
   // Event Listeners & Bootstrapping
   // -------------------------------------------------------------------------
   function bindEvents() {
-    // Top tabs & brand logo
+    // Top tabs (clicking Search & Directory while already on explore returns to StatLink homepage)
     document.querySelectorAll(".nav-tab").forEach((btn) => {
-      btn.addEventListener("click", () => switchView(btn.dataset.view));
-    });
-    document.getElementById("brandHomeBtn").addEventListener("click", () => {
-      switchView("explore");
-      resetToSearchHome();
+      btn.addEventListener("click", () => {
+        if (btn.dataset.view === "explore" && state.currentView === "explore" && !isExploreHomeState()) {
+          resetToSearchHome();
+        } else {
+          switchView(btn.dataset.view);
+        }
+      });
     });
 
-    // Main Search Input & Google-Style Front-Page Actions
+    // Main Search Input with Google-Style Autocomplete Dropdown (submits on Select or Enter)
     const mainInp = document.getElementById("mainSearchInput");
     const clearSearchBtn = document.getElementById("clearSearchBtn");
-    const triggerMainSearch = debounce(() => {
-      state.query = mainInp.value.trim();
-      state.page = 1;
-      clearSearchBtn.classList.toggle("hidden", !state.query);
-      executeSearch();
-    }, 220);
+    const mainDrop = document.getElementById("mainSearchDropdown");
+    const mainWrap = document.getElementById("mainSearchBoxWrap");
 
-    mainInp.addEventListener("input", triggerMainSearch);
-    mainInp.addEventListener("keydown", (e) => {
-      if (e.key === "Enter") {
-        e.preventDefault();
-        state.query = mainInp.value.trim();
-        if (!state.query) state.browseMode = true;
-        state.page = 1;
-        clearSearchBtn.classList.toggle("hidden", !state.query);
-        executeSearch();
+    const fetchMainSuggestions = debounce(async () => {
+      const q = mainInp.value.trim();
+      if (q.length < 2) {
+        closeMainSearchDropdown();
+        return;
+      }
+      const mySeq = ++sugReqSeq;
+      try {
+        const resp = await fetch(`/api/search?q=${encodeURIComponent(q)}&scope=${encodeURIComponent(state.scope)}&per_page=8`);
+        const data = await resp.json();
+        if (mySeq !== sugReqSeq || document.activeElement !== mainInp) return;
+        const rows = data.results || [];
+        activeSugIdx = -1;
+        typedBeforeArrows = q;
+
+        const searchIconSvg = `<svg class="google-sug-icon" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>`;
+        if (!rows.length) {
+          mainDrop.innerHTML = `
+            <div class="google-sug-item" data-q="${esc(q)}">
+              <div class="google-sug-left">
+                ${searchIconSvg}
+                <div class="google-sug-text">Search all records for <strong>${esc(q)}</strong></div>
+              </div>
+            </div>`;
+        } else {
+          mainDrop.innerHTML = rows
+            .map((p) => {
+              const star = p.famous_self ? `<span style="color:var(--gold-main);margin-right:3px;">★</span>` : "";
+              const meta = `${esc(p.school || "Institution unlisted")}${p.year ? " · " + p.year : ""}`;
+              return `
+                <div class="google-sug-item" data-q="${esc(p.name)}">
+                  <div class="google-sug-left">
+                    ${searchIconSvg}
+                    <div class="google-sug-text">${star}<strong>${esc(p.name)}</strong><span class="google-sug-meta">${meta}</span></div>
+                  </div>
+                  <span class="field-pill" data-field="${esc(p.primary_field)}">${esc(p.primary_field)}</span>
+                </div>`;
+            })
+            .join("");
+        }
+
+        mainDrop.classList.remove("hidden");
+        mainWrap?.classList.add("dropdown-open");
+
+        mainDrop.querySelectorAll(".google-sug-item").forEach((el) => {
+          el.addEventListener("mousedown", (ev) => {
+            ev.preventDefault();
+            submitMainSearch(el.dataset.q || mainInp.value);
+          });
+        });
+      } catch (err) {
+        console.error("Autocomplete error:", err);
+      }
+    }, 140);
+
+    mainInp.addEventListener("input", () => {
+      const hasVal = Boolean(mainInp.value.trim());
+      clearSearchBtn.classList.toggle("hidden", !hasVal);
+      if (!hasVal) {
+        sugReqSeq++;
+        closeMainSearchDropdown();
+        return;
+      }
+      fetchMainSuggestions();
+    });
+
+    mainInp.addEventListener("focus", () => {
+      if (mainInp.value.trim().length >= 2 && mainDrop.classList.contains("hidden")) {
+        fetchMainSuggestions();
       }
     });
+
+    mainInp.addEventListener("keydown", (e) => {
+      const items = mainDrop && !mainDrop.classList.contains("hidden")
+        ? Array.from(mainDrop.querySelectorAll(".google-sug-item"))
+        : [];
+      if (e.key === "ArrowDown" && items.length) {
+        e.preventDefault();
+        activeSugIdx = activeSugIdx + 1 >= items.length ? -1 : activeSugIdx + 1;
+        items.forEach((it, idx) => it.classList.toggle("active", idx === activeSugIdx));
+        mainInp.value = activeSugIdx >= 0 ? items[activeSugIdx].dataset.q : typedBeforeArrows;
+      } else if (e.key === "ArrowUp" && items.length) {
+        e.preventDefault();
+        activeSugIdx = activeSugIdx - 1 < -1 ? items.length - 1 : activeSugIdx - 1;
+        items.forEach((it, idx) => it.classList.toggle("active", idx === activeSugIdx));
+        mainInp.value = activeSugIdx >= 0 ? items[activeSugIdx].dataset.q : typedBeforeArrows;
+      } else if (e.key === "Enter") {
+        e.preventDefault();
+        submitMainSearch(mainInp.value);
+      } else if (e.key === "Escape") {
+        closeMainSearchDropdown();
+      }
+    });
+
     clearSearchBtn.addEventListener("click", () => {
+      sugReqSeq++;
       mainInp.value = "";
-      state.query = "";
-      state.page = 1;
       clearSearchBtn.classList.add("hidden");
-      executeSearch();
+      closeMainSearchDropdown();
+      if (state.query) {
+        state.query = "";
+        state.page = 1;
+        executeSearch();
+      }
       mainInp.focus();
     });
 
@@ -1658,7 +2231,28 @@
       }
     });
     document.getElementById("openFiltersHeroBtn")?.addEventListener("click", () => toggleMobileFilters());
+    document.getElementById("serpHomeLogoBtn")?.addEventListener("click", () => {
+      resetToSearchHome();
+      window.scrollTo({ top: 0, behavior: "instant" });
+    });
+    document.getElementById("topbarLogoBtn")?.addEventListener("click", () => {
+      switchView("explore", { skipHistory: true });
+      resetToSearchHome();
+      window.scrollTo({ top: 0, behavior: "instant" });
+    });
     document.getElementById("backToSearchHomeBtn")?.addEventListener("click", () => resetToSearchHome());
+
+    // Sticky Google SERP Header scroll shadow
+    const searchHeroSticky = document.getElementById("searchHeroSticky");
+    window.addEventListener(
+      "scroll",
+      () => {
+        if (searchHeroSticky) {
+          searchHeroSticky.classList.toggle("is-scrolled", window.scrollY > 8);
+        }
+      },
+      { passive: true }
+    );
 
     // Scope buttons
     document.querySelectorAll(".scope-pill").forEach((btn) => {
@@ -1730,46 +2324,155 @@
       resetToSearchHome();
     });
 
-    // Close dropdowns when clicking outside
+    // Close dropdowns & popovers when clicking outside
     document.addEventListener("click", (e) => {
       if (!e.target.closest(".autocomplete-wrap") && !e.target.closest(".tree-quick-jump")) {
         document.querySelectorAll(".autocomplete-dropdown").forEach((d) => d.classList.add("hidden"));
       }
+      if (!e.target.closest("#mainSearchBoxWrap")) {
+        closeMainSearchDropdown();
+      }
+      if (!e.target.closest("#treeDepthWrap")) {
+        closeTreeDepthPopover();
+      }
     });
 
-    // Tree Toolbar Controls
+    // Google-Maps-Style Floating Tree Controls
+    document.getElementById("treeDepthToggleBtn")?.addEventListener("click", (e) => {
+      e.stopPropagation();
+      const pop = document.getElementById("treeDepthPopover");
+      const btn = e.currentTarget;
+      if (!pop) return;
+      const nowOpen = pop.classList.toggle("hidden") === false;
+      btn.setAttribute("aria-expanded", nowOpen ? "true" : "false");
+    });
+
     document.getElementById("ancMinusBtn").addEventListener("click", () => {
       if (state.upDepth > 1) {
         state.upDepth--;
-        document.getElementById("ancDepthVal").textContent = state.upDepth;
-        loadPersonTree(state.focalId);
+        syncDepthLabels();
+        loadPersonTree(state.focalId, { replaceHistory: true });
       }
     });
     document.getElementById("ancPlusBtn").addEventListener("click", () => {
       if (state.upDepth < 45) {
         state.upDepth++;
-        document.getElementById("ancDepthVal").textContent = state.upDepth;
-        loadPersonTree(state.focalId);
+        syncDepthLabels();
+        loadPersonTree(state.focalId, { replaceHistory: true });
       }
     });
     document.getElementById("ancAllRootsBtn").addEventListener("click", () => {
       state.upDepth = 45;
-      document.getElementById("ancDepthVal").textContent = "All";
-      loadPersonTree(state.focalId);
+      syncDepthLabels();
+      loadPersonTree(state.focalId, { replaceHistory: true });
     });
 
     document.getElementById("descMinusBtn").addEventListener("click", () => {
       if (state.downDepth > 0) {
         state.downDepth--;
-        document.getElementById("descDepthVal").textContent = state.downDepth;
-        loadPersonTree(state.focalId);
+        syncDepthLabels();
+        loadPersonTree(state.focalId, { replaceHistory: true });
       }
     });
     document.getElementById("descPlusBtn").addEventListener("click", () => {
       if (state.downDepth < 4) {
         state.downDepth++;
-        document.getElementById("descDepthVal").textContent = state.downDepth;
-        loadPersonTree(state.focalId);
+        syncDepthLabels();
+        loadPersonTree(state.focalId, { replaceHistory: true });
+      }
+    });
+
+    // Editable middle generation inputs (Ancestors ↑ 1–45 / "All", Descendants ↓ 0–4)
+    const ancInpEl = document.getElementById("ancDepthVal");
+    const descInpEl = document.getElementById("descDepthVal");
+
+    const commitAncInput = () => {
+      if (!ancInpEl) return;
+      const raw = ancInpEl.value.trim().toLowerCase();
+      let nextUp = state.upDepth;
+      if (raw === "all") {
+        nextUp = 45;
+      } else if (/^\d+$/.test(raw)) {
+        nextUp = Math.min(45, Math.max(1, parseInt(raw, 10)));
+      }
+      syncDepthLabels();
+      if (nextUp !== state.upDepth) {
+        state.upDepth = nextUp;
+        syncDepthLabels();
+        loadPersonTree(state.focalId, { replaceHistory: true });
+      }
+    };
+
+    const commitDescInput = () => {
+      if (!descInpEl) return;
+      const raw = descInpEl.value.trim();
+      let nextDown = state.downDepth;
+      if (/^\d+$/.test(raw)) {
+        nextDown = Math.min(4, Math.max(0, parseInt(raw, 10)));
+      }
+      syncDepthLabels();
+      if (nextDown !== state.downDepth) {
+        state.downDepth = nextDown;
+        syncDepthLabels();
+        loadPersonTree(state.focalId, { replaceHistory: true });
+      }
+    };
+
+    ancInpEl?.addEventListener("focus", () => ancInpEl.select());
+    ancInpEl?.addEventListener("blur", commitAncInput);
+    ancInpEl?.addEventListener("keydown", (e) => {
+      if (e.key === "Enter") {
+        e.preventDefault();
+        ancInpEl.blur();
+      } else if (e.key === "ArrowUp") {
+        e.preventDefault();
+        if (state.upDepth < 45) {
+          state.upDepth++;
+          syncDepthLabels();
+          ancInpEl.select();
+          loadPersonTree(state.focalId, { replaceHistory: true });
+        }
+      } else if (e.key === "ArrowDown") {
+        e.preventDefault();
+        if (state.upDepth > 1) {
+          state.upDepth--;
+          syncDepthLabels();
+          ancInpEl.select();
+          loadPersonTree(state.focalId, { replaceHistory: true });
+        }
+      } else if (e.key === "Escape") {
+        e.stopPropagation();
+        syncDepthLabels();
+        ancInpEl.blur();
+      }
+    });
+
+    descInpEl?.addEventListener("focus", () => descInpEl.select());
+    descInpEl?.addEventListener("blur", commitDescInput);
+    descInpEl?.addEventListener("keydown", (e) => {
+      if (e.key === "Enter") {
+        e.preventDefault();
+        descInpEl.blur();
+      } else if (e.key === "ArrowUp") {
+        e.preventDefault();
+        if (state.downDepth < 4) {
+          state.downDepth++;
+          syncDepthLabels();
+          descInpEl.select();
+          loadPersonTree(state.focalId, { replaceHistory: true });
+        }
+      } else if (e.key === "ArrowDown") {
+        e.preventDefault();
+        if (state.downDepth > 0) {
+          state.downDepth--;
+          syncDepthLabels();
+          descInpEl.select();
+          loadPersonTree(state.focalId, { replaceHistory: true });
+        }
+      } else if (e.key === "Escape") {
+        e.stopPropagation();
+        syncDepthLabels();
+        descInpEl.blur();
       }
     });
 
@@ -1785,8 +2488,7 @@
 
     document.getElementById("toggleLayoutDirBtn").addEventListener("click", () => {
       state.layoutDir = state.layoutDir === "vertical" ? "horizontal" : "vertical";
-      document.getElementById("layoutDirLabel").textContent =
-        state.layoutDir === "vertical" ? "Vertical ↕" : "Horizontal ↔";
+      document.getElementById("layoutDirIcon")?.classList.toggle("is-horizontal", state.layoutDir === "horizontal");
       if (state.treeData) renderGenealogyGraph("#treeSvg", state.treeData, true);
     });
 
@@ -1822,13 +2524,12 @@
       }
     });
 
-    document.getElementById("exportSvgBtn").addEventListener("click", exportTreeSvg);
-
     // Quick pickers
     setupSchoolAutocomplete();
+    setupAncestorAutocomplete();
     setupPersonQuickPicker("treeQuickSearchInput", "treeQuickDropdown", (pid) => {
       document.getElementById("treeQuickSearchInput").value = "";
-      loadPersonTree(pid);
+      openPersonInTree(pid);
     });
     setupPersonQuickPicker("kinInput1", "kinDrop1", (pid, pname) => {
       state.kin1 = { id: pid, name: pname };
@@ -1861,7 +2562,10 @@
       executeSearch();
     });
     document.addEventListener("keydown", (e) => {
-      if (e.key === "Escape") toggleMobileFilters(false);
+      if (e.key === "Escape") {
+        toggleMobileFilters(false);
+        closeTreeDepthPopover();
+      }
     });
 
     const dossierPanel = document.getElementById("dossierPanel");
@@ -1895,6 +2599,45 @@
     );
   }
 
+  function parseSnapshotFromHash() {
+    const rawHash = (window.location.hash || "").replace(/^#/, "");
+    const base = captureHistorySnapshot();
+    const personMatch = rawHash.match(/^person=(\d+)/);
+    if (personMatch) {
+      base.currentView = "tree";
+      base.focalId = Number(personMatch[1]);
+      return base;
+    }
+    if (rawHash === "kinship") {
+      base.currentView = "kinship";
+      return base;
+    }
+    if (rawHash === "sources") {
+      base.currentView = "sources";
+      return base;
+    }
+    if (rawHash.startsWith("search?")) {
+      const sp = new URLSearchParams(rawHash.slice("search?".length));
+      base.currentView = "explore";
+      base.query = sp.get("q") || "";
+      base.school = sp.get("school") || "";
+      base.schoolRole = sp.get("role") || "both";
+      const ancRaw = sp.get("anc");
+      base.ancestorId = ancRaw && /^\d+$/.test(ancRaw) ? Number(ancRaw) : null;
+      base.ancestorName = sp.get("anc_name") || "";
+      base.ancestorMode = sp.get("anc_mode") || "all";
+      base.yearMin = sp.get("ymin") || "";
+      base.yearMax = sp.get("ymax") || "";
+      base.scope = sp.get("scope") || "core";
+      base.sort = sp.get("sort") || "relevance";
+      base.page = Math.max(1, Number(sp.get("page") || "1"));
+      base.browseMode = sp.get("browse") === "1";
+      return base;
+    }
+    base.currentView = "explore";
+    return base;
+  }
+
   // Boot!
   document.addEventListener("DOMContentLoaded", () => {
     initTheme();
@@ -1906,13 +2649,13 @@
     document.getElementById("kinInput2").value = state.kin2.name;
     document.getElementById("kinSelected2").textContent = `Selected: ${state.kin2.name}`;
 
-    // Check URL hash for deep link (#person=14941)
-    const hashMatch = window.location.hash.match(/person=(\d+)/);
-    if (hashMatch) {
-      executeSearch();
-      openPersonInTree(Number(hashMatch[1]));
-    } else {
-      executeSearch();
-    }
+    window.addEventListener("popstate", (e) => {
+      restoreHistoryState(e.state || parseSnapshotFromHash());
+    });
+
+    const initialSnap = parseSnapshotFromHash();
+    restoreHistoryState(initialSnap).then(() => {
+      commitHistoryState(true);
+    });
   });
 })();

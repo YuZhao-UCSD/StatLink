@@ -8,9 +8,9 @@ description: >-
   refreshing data, or modifying the StatLineage academic genealogy platform.
 ---
 
-# StatLineage — Ground-Zero Implementation Blueprint
+# StatLink (formerly StatLineage) — Ground-Zero Implementation Blueprint
 
-**StatLineage** is a high-recall, precision-calibrated, strictly read-only interactive academic genealogy web platform unifying **553,885 PhD scholars** and **593,676 doctoral mentorship edges** (`85,820` Core Statistics, Biostatistics & Probability PhDs and `143,845` Broad Quantitative PhDs) across **207 tracked statistical PhD institutions** and **3,042 global universities**, served via Flask + SQLite FTS5 + D3.js v7 on `http://127.0.0.1:5050`.
+**StatLink** is a high-recall, precision-calibrated, strictly read-only interactive academic genealogy web platform unifying **553,889 PhD scholars** and **593,680 doctoral mentorship edges** (`85,820` Core Statistics, Biostatistics & Probability PhDs and `143,845` Broad Quantitative PhDs) across **207 tracked statistical PhD institutions** and **3,042 global universities**, served via Flask + SQLite FTS5 + D3.js v7 on `http://127.0.0.1:5050`.
 
 For deep-dive specifications, read the companion reference manuals in `./references/`:
 - **[Data Sources, Entity Resolution & ETL Pipeline](./references/data_sources_and_etl_pipeline.md)** — Raw dataset schemas (`MGP`, `AcademicTree`, `Wikidata`), entity resolution tiers, TF-IDF + LogisticRegression classifier, pre-2015 `AFT` subtree precision calibration, and all 7 post-2013 ProQuest / Cloudflare gap-closing harvesters (`UC eScholarship`, `DSpace 7`, `DigitalCommons OAI-PMH`, `HAL`, `DataCite`, `OpenAlex`, `UF Commencement PDFs`, `ORCID + Crossref`, `NIH PubMed Methodology`, and `Faculty CVs`).
@@ -46,7 +46,14 @@ StatLineage/
 │   ├── fill_post2014_drop.py
 │   ├── harvest_datacite_2014_2025_dissertations.py
 │   ├── harvest_openalex_indexed_2015_2020.py
-│   └── complete_2014_2025_gap_and_aft_precision.py
+│   ├── complete_2014_2025_gap_and_aft_precision.py
+│   ├── enrich_scholar_external_links.py                  # Enriches Personal Website, Wikipedia, Google Scholar, LinkedIn, ORCID & Wikidata
+│   ├── enrich_scholar_photos.py                          # Harvests Wikidata P18, Wikipedia pageimages & faculty homepage portraits
+│   ├── fix_homonym_descendants_and_deep_enrich.py        # Audits young-PhD homonym edges + crawls 140+ dept directories & SSL-fixed portraits
+│   ├── exhaustive_internet_era_websites_and_photos.py    # Internet-era (1980+) DBLP + CRAN + GitHub Pages + Google Sites + Advisor student link sweep
+│   ├── audit_and_fix_personal_website_precision.py       # Enforces concrete school/advisor/thesis anchors on github.io & Google Sites (purges homonyms)
+│   ├── deduplicate_hyphen_and_stub_scholars.py           # Merges hyphen/space/middle-initial & undated-stub duplicates (e.g. Wenxin / Wen-Xin Zhou)
+│   └── refresh_recent_data.py                            # Unified CLI orchestrator (--mode recent | profiles | full, --pack-github)
 └── static/
     ├── index.html                                        # 4-view SPA shell (Search, Tree Visualizer, Common Ancestor, Analytics)
     ├── styles.css                                        # Light/Dark CSS tokens, card/star styling, mobile/tablet breakpoints
@@ -112,6 +119,12 @@ Execute the supplemental harvesters in order (each script updates `people`, `edg
    python scripts/harvest_datacite_2014_2025_dissertations.py
    python scripts/harvest_openalex_indexed_2015_2020.py
    python scripts/complete_2014_2025_gap_and_aft_precision.py
+   python scripts/enrich_scholar_external_links.py
+   python scripts/enrich_scholar_photos.py
+   python scripts/fix_homonym_descendants_and_deep_enrich.py
+   python scripts/exhaustive_internet_era_websites_and_photos.py
+   python scripts/audit_and_fix_personal_website_precision.py
+   python scripts/deduplicate_hyphen_and_stub_scholars.py
    ```
 
 ### Phase D: Pack Portable GitHub Archive & Launch Web Server
@@ -131,20 +144,24 @@ Execute the supplemental harvesters in order (each script updates `people`, `edg
 1. **Strictly Read-Only Web Application & Zero Static-HTML Caching Trap**:
    - `app.py` exposes **only `GET` endpoints** (`/api/stats`, `/api/random_person`, `/api/schools`, `/api/master_schools`, `/api/search`, `/api/person/<id>`, `/api/tree/<id>`, `/api/lineage_path`, `/api/connection`). Never expose browser-triggered web-crawl or live-import `POST` endpoints in the UI or server.
    - Set `SEND_FILE_MAX_AGE_DEFAULT = 0` and emit `Cache-Control: no-store, no-cache, must-revalidate, max-age=0` on `/` and `/static/*` (Flask 2.0 defaults to `max-age=43200`, which otherwise causes browsers to serve stale `index.html` layouts for 12 hours).
-2. **Sub-Millisecond Ancestry Lookup (`AncestryIndex` vs. SQLite CTE)**:
-   - Never run `WITH RECURSIVE ... UNION ALL` in SQLite on academic genealogy DAGs—reconverging 18th-century European lineages cause exponential blowup (`13.7s` per request). Cache upward parent tuples in memory (`famous_ancestors.py`) for **`0.07ms` BFS** lookups.
+2. **Sub-Millisecond Ancestry & Descendant Lookup (`AncestryIndex` vs. SQLite CTE)**:
+   - Never run `WITH RECURSIVE ... UNION ALL` in SQLite on academic genealogy DAGs—reconverging 18th-century European lineages cause exponential blowup (`13.7s` per request). Cache upward `_parents` and downward `_children` tuples in memory (`famous_ancestors.py`) for **`0.07ms` upward BFS** and **`0.01–2ms` downward descendant BFS** (`get_descendants_map(db, ancestor_id, direct_only)` powering `/api/search?ancestor_id=`).
 3. **Why `2014 -> 2015` Drops in Raw Data & How It Was Solved**:
    - AcademicTree stopped bulk-importing ProQuest in late 2014, while pre-2015 `AFT-only` rows contained `~11,750` non-statistical ecology/psychology/humanities theses pulled into `Core` by multi-hop lineage propagation. Recalibrating non-statistical `AFT-only` rows to `Related Quantitative` (`0` deleted) + harvesting post-2013 ETDs/ORCID/DataCite/OpenAlex/PubMed produces a smooth, truthful annual curve (`1920–2026`).
-4. **OpenAlex Quota Discipline & ORCID Rate Limiting**:
+4. **OpenAlex Quota Discipline, ORCID Rate Limiting & Automated ETD Homonym Guard**:
    - OpenAlex `title.search:` costs `\$0.01`/call (`100x` indexed filters at `\$0.0001`/call) against a `\$0.10`/day anonymous IP quota—always use indexed `concepts.id` filters or `DataCite` (zero quota).
    - Against `pub.orcid.org`, use at most `8` concurrent workers with exponential backoff on `HTTP 429`.
+   - **Never link an automated ETD / PubMed advisee to an advisor whose own PhD is $\le 3$ years prior** (`student.year - advisor.year <= 3`) or via an ambiguous cross-university `DataCite ETD` global name fallback—this causes recent PhD graduates (e.g., *Yu Zhao*, UCSD PhD 2023) to absorb engineering advisees of older homonyms at other universities. Always enforce `fix_false_homonym_descendants()`, retry `.edu` HTML fetches with `verify=False` on `SSLError` (`math.ucsd.edu`, `pages.ucsd.edu`, `cseweb.ucsd.edu`, `stat.ufl.edu`), never block `"default"` as a raw URL substring (which matches Drupal's `/sites/default/files/` across US `.edu` sites), and use a single shared sliding-window `ThreadPoolExecutor` (`run_bounded_batch`) so neither hung sockets nor leaked per-chunk thread pools can stall or drop URLs.
 5. **UI Cleanliness & Visual Invariants** (see [backend_and_frontend_spec.md](./references/backend_and_frontend_spec.md)):
-   - **Google-Search-Style `Search & Directory` Tab**: Lands on a minimalist centered front page (`.explore-layout.is-home`) with the `StatLineage` wordmark, floating pill search box (`border-radius: 999px`), two understated action buttons (`Filters & Universities ▾` and `I'm Feeling Lucky` — which jumps via `GET /api/random_person` to a random connected statistical scholar's tree; no `Browse Directory` button), and the **5 era-spanning `Notable Trees`** (`Carl Friedrich Gauss (1799)`, `Jerzy Neyman (1924)`, `David Blackwell (1941)`, `Bradley Efron (1964)`, `Xihong Lin (1994)`). Clicking `Filters & Universities ▾` smoothly animates `#inlineFiltersCollapse` (`grid-template-rows: 0fr <-> 1fr` + continuous `padding-top` glide, avoiding discrete `justify-content` or `display: none` jumps) **inline directly below the buttons and above `Notable Trees`**.
-   - **No clutter**: No permanent left sidebar; no top-right scholar count pill; no `Top PhD Institutions` list or scope hint text on Tab 1; `"All"` scope pill label; no `Trail` bar; no `AcademicTree / ProQuest Enriched` KPI card; no `Evaluation of Online Academic Genealogy Resources` section on Tab 4.
+   - **Google-Style Top Bar, `Search` Front Page, Pinned SERP & Fuzzy Search (`StatLink`)**:
+     - **Bannerless Top Bar & Subtab Home Logo**: Bannerless (`background: transparent; border: none; box-shadow: none;`), displaying **1-word** navigation links (**`Search`**, **`Tree`**, **`Kinship`**, **`Analytics`**) + circular theme icon on the right, and automatically revealing a clickable **`StatLink`** logo (`#topbarLogoBtn`) on the top-left of every subtab (`Tree`, `Kinship`, `Analytics`) to return to the `Search` tab (`body:not([data-active-view="explore"])`), while keeping the Search front page top-left empty.
+     - **Front Page (`.explore-layout.is-home`)**: Optically centered (`::before` `flex: 0.86`, `::after` `flex: 1.14`) **`StatLink`** wordmark, floating pill search box with live fuzzy autocomplete dropdown (`#mainSearchDropdown`), two action buttons (`Filters & Universities ▾` and `I'm Feeling Random`), smooth `0fr <-> 1fr` inline filter accordion, and the **5 era-spanning `Notable Trees`** (`Gauss`, `Neyman`, `Blackwell`, `Efron`, `Xihong Lin`).
+     - **Google-Pinned SERP, 3-Column Filter Panel & Floating `Tree` Controls**: Hides `Notable Trees` on SERP; adds a clickable **`StatLink`** logo (`#serpHomeLogoBtn`) to the **left of the search box** to return home; pins `.search-hero` (`position: sticky; top: 0;`) with scroll shadow (`.is-scrolled`) as the user scrolls down; structures `#inlineFiltersPanel` as a compact **3-column grid** (`University (PhD or Faculty)` | compact `150px` **`PhD Year`** `From`–`To` without wrapped era chips | **`Descendant Of`** scholar autocomplete with `All Descendants` / `Direct Students` chips right of `PhD Year`); uses Google-Maps-style floating `Tree` controls (top-left search pill + bottom-right 3-icon camera stack + `6↑ · 2↓` popover with directly editable middle generation inputs that auto-reset to default `6↑ · 2↓` when opening a different search result); and supports Google-like fuzzy search (`FuzzySearchIndex` in `app.py`) plus HTML5 Browser Back/Forward (`pushState`/`popstate`).
+   - **No clutter**: No permanent left sidebar; no top-right scholar count pill; no `Top PhD Institutions` list or scope hint text on Tab 1; `"All"` scope pill label; no `Trail` bar; no `AcademicTree / ProQuest Enriched` KPI card; no `"Hover any year bar for exact counts."` sentence or `Evaluation of Online Academic Genealogy Resources` section on Tab 4.
    - **Tree Node Visuals**: Blue border = focal/selected/hovered scholar; grey border = other scholars; `5.5px` left stripe = subfield color; gold `★` next to world-famous scientists' names on Search cards, Tree SVG nodes, and Dossier titles; `★ World-Famous Scientist Ancestors` placed below `Doctoral Advisors` in the right-hand Dossier.
    - **Dark Mode Zoom Stability**: Toggle `data-theme` without tearing down `#treeSvg`, and preserve `d3.zoomTransform(svgEl)` across non-recentering renders.
-6. **Living Blueprint Maintenance Rule**:
-   - **Whenever any UI, backend API, database schema, or ETL pipeline change is made to StatLineage, always update `SKILL.md` and the corresponding specification file under `./references/` in the same turn** so ground-zero reproducibility never drifts from the live codebase.
+6. **Living Blueprint & Data-Refresh Skill Maintenance Rule**:
+   - **Whenever any UI, backend API, database schema, crawler, or ETL pipeline change is made to StatLink, always update `SKILL.md` + `./references/` here AND `.agents/skills/statlink-data-refresh/` in the same turn** so ground-zero reproducibility and incremental data refreshes never drift from the live codebase.
 
 ---
 

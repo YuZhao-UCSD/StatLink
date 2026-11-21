@@ -1388,6 +1388,10 @@ def main():
             wikidata_qid TEXT,
             orcid TEXT,
             homepage TEXT,
+            wikipedia_url TEXT DEFAULT '',
+            google_scholar_url TEXT DEFAULT '',
+            linkedin_url TEXT DEFAULT '',
+            photo_url TEXT DEFAULT '',
             proquest_id TEXT,
             sources TEXT NOT NULL,
             advisor_count INTEGER NOT NULL DEFAULT 0,
@@ -1470,6 +1474,10 @@ def main():
             rec["wikidata_qid"],
             rec["orcid"],
             rec["homepage"],
+            "",
+            "",
+            "",
+            "",
             rec["proquest_id"],
             ",".join(rec["sources"]),
             adv_c,
@@ -1493,7 +1501,7 @@ def main():
             decade_hist[dec][rec["primary_field"]] += 1
 
     cur.executemany("""
-        INSERT INTO people VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
+        INSERT INTO people VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
     """, people_rows)
 
     edge_rows = [(adv, stu, "+".join(sorted(srcs))) for (adv, stu), srcs in edge_sources.items()]
