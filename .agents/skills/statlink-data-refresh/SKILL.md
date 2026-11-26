@@ -56,7 +56,7 @@ Choose the refresh mode matching the scope of your update:
 Whenever refreshing into a new calendar year $Y > 2026$, update the upper year bound in **four** places before running `--mode recent`:
 1. **Harvesters**: Update upper year range in `scripts/harvest_datacite_2014_2025_dissertations.py`, `scripts/complete_2014_2025_gap_and_aft_precision.py`, `scripts/harvest_pubmed_methodology_lineages.py`, and add new semester commencement PDF URLs in `scripts/harvest_uf_commencements_and_orcid_retry.py`.
 2. **Backend Histogram (`app.py`)**: Update `year BETWEEN 1920 AND <Y>` in `/api/stats`.
-3. **Frontend 1-Year Growth Chart (`static/app.js` & `static/index.html`)**: Update `const maxYear = <Y>;` in `renderDecadeChart()` (`static/app.js`), `<input max="<Y+1>">` and `(1920–<Y>)` subtitle in `static/index.html` (under `Data Sources, Methodology & Analytics`), and bump `?v=` query strings on `styles.css` (currently `?v=24`) / `app.js` (currently `?v=33`).
+3. **Frontend 1-Year Growth Chart (`static/app.js` & `static/index.html`)**: Update `const maxYear = <Y>;` in `renderDecadeChart()` (`static/app.js`), `<input max="<Y+1>">` and `(1920–<Y>)` subtitle in `static/index.html` (under `Data Sources, Methodology & Analytics`), and bump `?v=` query strings on `styles.css` (currently `?v=24`) / `app.js` (currently `?v=34`).
 
 ---
 

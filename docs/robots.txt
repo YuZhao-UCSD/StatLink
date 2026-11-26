@@ -1,0 +1,4 @@
+﻿User-agent: *
+Allow: /
+
+Sitemap: https://yuzhao-ucsd.github.io/StatLink/sitemap.xml

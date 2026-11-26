@@ -253,6 +253,19 @@ def main():
     with open(os.path.join(DOCS_DIR, ".nojekyll"), "w", encoding="utf-8") as f:
         f.write("")
 
+    # SEO crawl files: robots.txt & sitemap.xml
+    site_url = "https://yuzhao-ucsd.github.io/StatLink/"
+    today = time.strftime("%Y-%m-%d")
+    with open(os.path.join(DOCS_DIR, "robots.txt"), "w", encoding="utf-8") as f:
+        f.write(f"User-agent: *\nAllow: /\n\nSitemap: {site_url}sitemap.xml\n")
+    with open(os.path.join(DOCS_DIR, "sitemap.xml"), "w", encoding="utf-8") as f:
+        f.write(
+            '<?xml version="1.0" encoding="UTF-8"?>\n'
+            '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n'
+            f"  <url>\n    <loc>{site_url}</loc>\n    <lastmod>{today}</lastmod>\n    <changefreq>monthly</changefreq>\n    <priority>1.0</priority>\n  </url>\n"
+            "</urlset>\n"
+        )
+
     db.close()
     print(f"Built GitHub Pages static bundle in {DOCS_DIR} in {time.time() - t0:.1f}s:")
     print(f"  people_index.json.gz : {pidx_sz / 1048576:.2f} MB ({len(people_compact):,} scholars)")

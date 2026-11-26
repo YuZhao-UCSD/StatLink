@@ -191,6 +191,22 @@
     } else {
       window.history.pushState(snap, "", url);
     }
+    // Sync document title & send SPA page_view to Google Analytics 4 (when STATLINK_GA_ID is set)
+    if (snap.currentView === "kinship") {
+      document.title = "Academic Kinship Finder — StatLink";
+    } else if (snap.currentView === "sources") {
+      document.title = "Data Sources, Methodology & Analytics — StatLink";
+    } else if (snap.currentView === "explore" && snap.query) {
+      document.title = `${snap.query} — StatLink Search`;
+    } else if (snap.currentView === "explore") {
+      document.title = "StatLink — Academic Family Tree of Statistics, Biostatistics & Probability";
+    }
+    if (!replace && typeof window.gtag === "function") {
+      window.gtag("event", "page_view", {
+        page_title: document.title,
+        page_location: window.location.href,
+      });
+    }
   }
 
   function syncSearchDomFromState() {
@@ -1450,6 +1466,7 @@
       const chip = document.getElementById("activePersonChip");
       chip.textContent = personData.name;
       chip.classList.remove("hidden");
+      document.title = `${personData.name} — Academic Family Tree | StatLink`;
 
       document.getElementById("exitTraceModeBtn")?.classList.add("hidden");
       renderDossier(personData);
