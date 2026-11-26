@@ -10,13 +10,16 @@ in the browser with zero Python backend required.
 """
 
 import gzip
+import html as html_mod
 import json
 import os
+import re
 import shutil
 import sqlite3
 import struct
 import sys
 import time
+import unicodedata
 from collections import defaultdict
 
 sys.stdout.reconfigure(encoding="utf-8")
@@ -253,18 +256,151 @@ def main():
     with open(os.path.join(DOCS_DIR, ".nojekyll"), "w", encoding="utf-8") as f:
         f.write("")
 
-    # SEO crawl files: robots.txt & sitemap.xml
+    # SEO crawl files: top-150 static scholar landing pages + robots.txt + sitemap.xml
     site_url = "https://yuzhao-ucsd.github.io/StatLink/"
     today = time.strftime("%Y-%m-%d")
+    scholars_dir = os.path.join(DOCS_DIR, "scholars")
+    os.makedirs(scholars_dir, exist_ok=True)
+
+    def make_slug(name: str, pid: int) -> str:
+        s = unicodedata.normalize("NFKD", name or "").encode("ascii", "ignore").decode("ascii").lower()
+        s = re.sub(r"[^a-z0-9]+", "-", s).strip("-")
+        return f"{s or 'scholar'}-{pid}"
+
+    top_seo_rows = db.execute("""
+        SELECT id, name, COALESCE(school, '') AS school, year, primary_field,
+               COALESCE(thesis, '') AS thesis, student_count, descendant_count,
+               COALESCE(homepage, '') AS homepage, COALESCE(wikipedia_url, '') AS wikipedia_url
+        FROM people
+        WHERE is_core_stat = 1
+        ORDER BY stat_descendant_count DESC, descendant_count DESC, student_count DESC
+        LIMIT 150
+    """).fetchall()
+
+    seo_urls = [site_url, f"{site_url}scholars/"]
+    index_links = []
+    for r in top_seo_rows:
+        pid = r["id"]
+        slug = make_slug(r["name"], pid)
+        fname = f"{slug}.html"
+        page_url = f"{site_url}scholars/{fname}"
+        seo_urls.append(page_url)
+
+        advs = db.execute(
+            "SELECT p.id, p.name, p.year FROM edges e JOIN people p ON p.id = e.advisor_id WHERE e.student_id = ?",
+            (pid,),
+        ).fetchall()
+        stus = db.execute(
+            "SELECT p.id, p.name, p.year, COALESCE(p.school, '') AS school FROM edges e JOIN people p ON p.id = e.student_id WHERE e.advisor_id = ? ORDER BY p.descendant_count DESC, p.year ASC LIMIT 30",
+            (pid,),
+        ).fetchall()
+
+        nm = html_mod.escape(r["name"])
+        sch = html_mod.escape(r["school"] or "Institution unlisted")
+        yr = str(r["year"]) if r["year"] else ""
+        pf = html_mod.escape(r["primary_field"])
+        th = html_mod.escape(r["thesis"])
+        adv_names = ", ".join(a["name"] for a in advs)
+        desc = (
+            f"Explore {r['name']}'s academic family tree in {r['primary_field']}"
+            f"{' (' + r['school'] + (', ' + yr if yr else '') + ')' if r['school'] else ''}: "
+            f"{'PhD advisor ' + adv_names + ', ' if adv_names else ''}"
+            f"{r['student_count']} direct PhD students and {r['descendant_count']:,} total academic descendants on StatLink."
+        )
+        desc_esc = html_mod.escape(desc)
+
+        adv_parts = []
+        for a in advs:
+            ay = f" ({a['year']})" if a["year"] else ""
+            adv_parts.append(f'<li><a href="../#person={a["id"]}">{html_mod.escape(a["name"])}</a>{ay}</li>')
+        adv_li = "".join(adv_parts) or "<li>No doctoral advisor recorded.</li>"
+
+        stu_parts = []
+        for s in stus:
+            sy = f" ({s['year']})" if s["year"] else ""
+            ss = f" — {html_mod.escape(s['school'])}" if s["school"] else ""
+            stu_parts.append(f'<li><a href="../#person={s["id"]}">{html_mod.escape(s["name"])}</a>{sy}{ss}</li>')
+        stu_li = "".join(stu_parts) or "<li>No doctoral students recorded.</li>"
+
+        ld = {
+            "@context": "https://schema.org",
+            "@type": "Person",
+            "name": r["name"],
+            "description": desc,
+            "url": page_url,
+            "alumniOf": r["school"] or None,
+            "sameAs": [u for u in (r["homepage"], r["wikipedia_url"]) if u],
+        }
+        ld_json = json.dumps({k: v for k, v in ld.items() if v}, ensure_ascii=False)
+
+        page_html = f"""<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>{nm} — Academic Family Tree &amp; PhD Lineage | StatLink</title>
+  <meta name="description" content="{desc_esc}" />
+  <meta name="robots" content="index, follow" />
+  <link rel="canonical" href="{page_url}" />
+  <meta property="og:type" content="profile" />
+  <meta property="og:title" content="{nm} — Academic Family Tree | StatLink" />
+  <meta property="og:description" content="{desc_esc}" />
+  <meta property="og:url" content="{page_url}" />
+  <script type="application/ld+json">{ld_json}</script>
+  <style>
+    body{{font-family:Inter,-apple-system,BlinkMacSystemFont,sans-serif;max-width:780px;margin:40px auto;padding:0 20px;color:#0f172a;line-height:1.6}}
+    a{{color:#3b5bdb;text-decoration:none}} a:hover{{text-decoration:underline}}
+    .brand{{font-weight:800;font-size:20px;color:#0f172a}} .brand span{{color:#3b5bdb}}
+    .cta{{display:inline-block;margin:14px 0 22px;padding:10px 18px;border-radius:99px;background:#3b5bdb;color:#fff;font-weight:600}}
+    .cta:hover{{background:#2f49b8;text-decoration:none}}
+    .meta{{color:#475569;font-size:15px}} .thesis{{font-style:italic;background:#f8fafc;border-left:3px solid #3b5bdb;padding:10px 14px;margin:14px 0}}
+    ul{{padding-left:20px}} li{{margin:4px 0}}
+  </style>
+</head>
+<body>
+  <p><a class="brand" href="../">Stat<span>Link</span></a> &nbsp;/&nbsp; <a href="./">Notable Statisticians</a></p>
+  <h1>{nm}</h1>
+  <p class="meta">{pf} &middot; {sch}{f" &middot; PhD {yr}" if yr else ""} &middot; {r['student_count']} PhD students &middot; {r['descendant_count']:,} academic descendants</p>
+  <a class="cta" href="../#person={pid}">Open Interactive Family Tree &rarr;</a>
+  {f'<div class="thesis">&ldquo;{th}&rdquo;</div>' if th else ''}
+  <h2>Doctoral Advisor(s)</h2>
+  <ul>{adv_li}</ul>
+  <h2>Notable Direct PhD Students</h2>
+  <ul>{stu_li}</ul>
+</body>
+</html>"""
+        with open(os.path.join(scholars_dir, fname), "w", encoding="utf-8") as f:
+            f.write(page_html)
+        index_links.append(f'<li><a href="{fname}">{nm}</a> — {sch}{f" ({yr})" if yr else ""} · {r["descendant_count"]:,} descendants</li>')
+
+    idx_html = f"""<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Notable Statisticians, Biostatisticians &amp; Probabilists | StatLink</title>
+  <meta name="description" content="Directory of the 150 most influential PhD lineages in Statistics, Biostatistics, and Probability on StatLink." />
+  <meta name="robots" content="index, follow" />
+  <link rel="canonical" href="{site_url}scholars/" />
+  <style>body{{font-family:Inter,-apple-system,sans-serif;max-width:840px;margin:40px auto;padding:0 20px;color:#0f172a;line-height:1.65}} a{{color:#3b5bdb;text-decoration:none}} a:hover{{text-decoration:underline}}</style>
+</head>
+<body>
+  <p><a href="../"><strong>StatLink</strong> &larr; Back to Interactive Search</a></p>
+  <h1>Notable Statisticians, Biostatisticians &amp; Probabilists</h1>
+  <ol>{"".join(index_links)}</ol>
+</body>
+</html>"""
+    with open(os.path.join(scholars_dir, "index.html"), "w", encoding="utf-8") as f:
+        f.write(idx_html)
+
     with open(os.path.join(DOCS_DIR, "robots.txt"), "w", encoding="utf-8") as f:
         f.write(f"User-agent: *\nAllow: /\n\nSitemap: {site_url}sitemap.xml\n")
+    sitemap_entries = "\n".join(
+        f"  <url>\n    <loc>{u}</loc>\n    <lastmod>{today}</lastmod>\n    <priority>{'1.0' if u == site_url else '0.8'}</priority>\n  </url>"
+        for u in seo_urls
+    )
     with open(os.path.join(DOCS_DIR, "sitemap.xml"), "w", encoding="utf-8") as f:
-        f.write(
-            '<?xml version="1.0" encoding="UTF-8"?>\n'
-            '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n'
-            f"  <url>\n    <loc>{site_url}</loc>\n    <lastmod>{today}</lastmod>\n    <changefreq>monthly</changefreq>\n    <priority>1.0</priority>\n  </url>\n"
-            "</urlset>\n"
-        )
+        f.write(f'<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n{sitemap_entries}\n</urlset>\n')
 
     db.close()
     print(f"Built GitHub Pages static bundle in {DOCS_DIR} in {time.time() - t0:.1f}s:")
