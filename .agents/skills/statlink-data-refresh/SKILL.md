@@ -96,7 +96,7 @@ If running stages individually for targeted debugging rather than via `scripts/r
 ### Stage D — Post-Refresh Finalization, Server Restart & Optional GitHub Push
 13. If not using `refresh_recent_data.py`, always recompute `advisor_count`, `student_count`, topological `descendant_count`, `meta_stats['summary']`, and `INSERT INTO people_fts(people_fts) VALUES('rebuild')`.
 14. **Restart `python app.py` on port `5050`**: `app.py` caches `ANCESTRY_INDEX` (`famous_ancestors.py` — both upward `_parents` and downward `_children` / `get_descendants_map` powering the `Descendant Of` search filter), `_FUZZY_INDEX`, and `_LUCKY_IDS_CACHE` in memory at startup—restarting is **mandatory** after any `edges` or `people` addition/deletion.
-15. **Before `git push` to GitHub**: Run `python scripts/pack_database_parts.py` (regenerating `<= 45 MB` chunks under `data/db_parts/`) and `python scripts/build_gh_pages.py` (regenerating the 100% serverless GitHub Pages site in `docs/` with `static/static_api.js`, `docs/data/people_index.json.gz`, `docs/data/graph.bin.gz`, `docs/data/topic_map.json`, 256 detail shards, 150 static SEO scholar landing pages in `docs/scholars/`, `robots.txt`, and `sitemap.xml`).
+15. **Before `git push` to GitHub**: Run `python scripts/pack_database_parts.py` (regenerating `<= 45 MB` chunks under `data/db_parts/`) and `python scripts/build_gh_pages.py` (regenerating the 100% serverless GitHub Pages site in `docs/` with `static/static_api.js`, `docs/data/people_index.json.gz`, `docs/data/graph.bin.gz`, `docs/data/topic_map.json`, 256 detail shards, 150 static SEO scholar landing pages in `docs/scholars/` instrumented with Google Tag `GTM-W772DSVH`, `robots.txt`, and `sitemap.xml`).
 
 ---
 

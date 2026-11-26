@@ -347,6 +347,13 @@ def main():
   <meta property="og:description" content="{desc_esc}" />
   <meta property="og:url" content="{page_url}" />
   <script type="application/ld+json">{ld_json}</script>
+  <!-- Google Tag (GTM-W772DSVH) -->
+  <script async src="https://www.googletagmanager.com/gtm.js?id=GTM-W772DSVH"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){{dataLayer.push(arguments);}}
+    gtag('js', new Date());
+  </script>
   <style>
     body{{font-family:Inter,-apple-system,BlinkMacSystemFont,sans-serif;max-width:780px;margin:40px auto;padding:0 20px;color:#0f172a;line-height:1.6}}
     a{{color:#3b5bdb;text-decoration:none}} a:hover{{text-decoration:underline}}
@@ -382,6 +389,13 @@ def main():
   <meta name="description" content="Directory of the 150 most influential PhD lineages in Statistics, Biostatistics, and Probability on StatLink." />
   <meta name="robots" content="index, follow" />
   <link rel="canonical" href="{site_url}scholars/" />
+  <!-- Google Tag (GTM-W772DSVH) -->
+  <script async src="https://www.googletagmanager.com/gtm.js?id=GTM-W772DSVH"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){{dataLayer.push(arguments);}}
+    gtag('js', new Date());
+  </script>
   <style>body{{font-family:Inter,-apple-system,sans-serif;max-width:840px;margin:40px auto;padding:0 20px;color:#0f172a;line-height:1.65}} a{{color:#3b5bdb;text-decoration:none}} a:hover{{text-decoration:underline}}</style>
 </head>
 <body>
