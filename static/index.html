@@ -7,7 +7,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Newsreader:ital,opsz,wght@0,6..72,500;0,6..72,600;1,6..72,400&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="/static/styles.css?v=19" />
+  <link rel="stylesheet" href="/static/styles.css?v=24" />
   <script src="https://d3js.org/d3.v7.min.js"></script>
 </head>
 <body data-active-view="explore">
@@ -23,6 +23,7 @@
       </nav>
 
       <div class="topbar-right">
+        <button type="button" id="aboutLinkBtn" class="topbar-about-link" aria-haspopup="dialog">About</button>
         <button class="icon-btn" id="themeToggleBtn" title="Toggle Light / Dark Theme" aria-label="Toggle Theme">
           <svg id="themeIconSun" class="hidden" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="5"/><path d="M12 1v2m0 18v2M4.22 4.22l1.42 1.42m12.72 12.72 1.42 1.42M1 12h2m18 0h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg>
           <svg id="themeIconMoon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
@@ -332,8 +333,8 @@
   <main id="view-sources" class="view-section">
     <div class="sources-container">
       <div class="sources-hero">
-        <h1>Data Sources, High-Recall Methodology &amp; Field Analytics</h1>
-        <p>No single database captures every PhD in Statistics, Biostatistics, and Probability. StatLink unifies three complementary global scholarly databases with machine-learned dissertation classification and genealogical consensus propagation.</p>
+        <h1>Data Sources, Methodology &amp; Analytics</h1>
+        <p>StatLink unifies complementary global scholarly databases with machine-learned dissertation classification and genealogical consensus propagation.</p>
       </div>
 
       <!-- KPI Metric Cards -->
@@ -362,20 +363,44 @@
         </div>
       </div>
 
-      <!-- Master Directory of 207 Global Statistics & Biostatistics Universities -->
-      <div class="analytics-card full-width-card">
-        <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;margin-bottom:12px;">
-          <div>
-            <h3>Global Directory of Statistics, Biostatistics &amp; Probability PhD Universities (207 Institutions)</h3>
-            <p class="card-sub" style="margin:0;">Covers US ASA/IPEDS Statistics &amp; Biostatistics PhD programs plus flagship Canadian, UK, European, Asian &amp; Australian departments. Click <strong>Faculty</strong> or <strong>PhD Alumni</strong> on any institution.</p>
-          </div>
-          <input type="text" id="masterSchoolSearchInput" class="filter-input" style="max-width:280px;" placeholder="Filter 207 universities or countries…" />
+      <!-- Dissertation Topic Landscape -->
+      <div class="analytics-card full-width-card" id="topicMapCard">
+        <div class="topic-map-header">
+          <h3 style="margin:0;">Dissertation Topic Landscape</h3>
+          <div id="topicClusterLegend" class="topic-cluster-legend"></div>
         </div>
-        <div id="masterSchoolsDirectory" class="results-grid" style="max-height:460px;overflow-y:auto;padding-right:4px;"></div>
+
+        <div class="topic-map-stage" id="topicMapStage">
+          <svg id="topicMapSvg" role="img" aria-label="2D Clustered Semantic Map of Core Statistics, Biostatistics, and Probability Dissertations"></svg>
+          <div class="topic-map-zoom-dock">
+            <button type="button" id="topicMapResetBtn" class="topic-zoom-btn" title="Reset view" aria-label="Reset view">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 3-6.7L3 8"/><path d="M3 3v5h5"/></svg>
+            </button>
+            <button type="button" id="topicZoomInBtn" class="topic-zoom-btn" title="Zoom in" aria-label="Zoom in">+</button>
+            <button type="button" id="topicZoomOutBtn" class="topic-zoom-btn" title="Zoom out" aria-label="Zoom out">&minus;</button>
+          </div>
+          <div id="topicMapTooltip" class="topic-map-tooltip hidden"></div>
+        </div>
+
+        <div id="topicDetailDrawer" class="topic-detail-drawer hidden"></div>
       </div>
     </div>
   </main>
 
-  <script src="/static/app.js?v=24"></script>
+  <!-- About StatLink Dialog -->
+  <div id="aboutModal" class="about-modal hidden" role="dialog" aria-modal="true" aria-labelledby="aboutModalTitle">
+    <div class="about-modal-card">
+      <div class="about-modal-header">
+        <h3 id="aboutModalTitle">About Stat<span>Link</span></h3>
+        <button type="button" id="aboutCloseBtn" class="about-close-btn" aria-label="Close">&times;</button>
+      </div>
+      <p class="about-modal-text">Built by a statistician who knows a bit about search.</p>
+      <div class="about-modal-actions">
+        <a href="https://yuzhao-ucsd.github.io/" target="_blank" rel="noopener noreferrer" class="btn-primary about-home-btn">Visit Homepage &#8599;</a>
+      </div>
+    </div>
+  </div>
+
+  <script src="/static/app.js?v=33"></script>
 </body>
 </html>

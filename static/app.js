@@ -138,14 +138,15 @@
   }
 
   function buildHistoryUrl(snap) {
+    const base = window.location.pathname || "/";
     if (snap.currentView === "tree") {
-      return `/#person=${snap.focalId}`;
+      return `${base}#person=${snap.focalId}`;
     }
     if (snap.currentView === "kinship") {
-      return "/#kinship";
+      return `${base}#kinship`;
     }
     if (snap.currentView === "sources") {
-      return "/#sources";
+      return `${base}#sources`;
     }
     const isHome =
       !snap.query &&
@@ -156,7 +157,7 @@
       snap.scope === "core" &&
       !snap.browseMode;
     if (isHome) {
-      return "/";
+      return base;
     }
     const p = new URLSearchParams();
     if (snap.query) p.set("q", snap.query);
@@ -175,7 +176,7 @@
     if (snap.sort && snap.sort !== "relevance") p.set("sort", snap.sort);
     if (snap.page && snap.page > 1) p.set("page", String(snap.page));
     if (snap.browseMode && !p.toString()) p.set("browse", "1");
-    return `/#search?${p.toString()}`;
+    return `${base}#search?${p.toString()}`;
   }
 
   function commitHistoryState(replace = false) {
@@ -325,8 +326,15 @@
       } else {
         setTimeout(() => renderGenealogyGraph("#treeSvg", state.treeData, true), 40);
       }
-    } else if (viewName === "sources" && state.globalStats) {
-      setTimeout(() => renderDecadeChart(state.globalStats.summary.year_histogram || state.globalStats.summary.decade_histogram), 40);
+    } else if (viewName === "sources") {
+      if (state.globalStats) {
+        setTimeout(() => renderDecadeChart(state.globalStats.summary.year_histogram || state.globalStats.summary.decade_histogram), 40);
+      }
+      if (topicMapCache) {
+        setTimeout(() => renderDissertationTopicMap(), 50);
+      } else {
+        loadDissertationTopicMap();
+      }
     }
   }
 
@@ -371,7 +379,7 @@
       });
 
       populateSourcesView(data);
-      loadMasterSchoolsDirectory();
+      loadDissertationTopicMap();
     } catch (err) {
       console.error("Failed loading stats:", err);
     }
@@ -461,7 +469,7 @@
       {
         num: fmtNum(s.total_edges),
         title: "Verified PhD Advisor Edges",
-        desc: "Strictly doctoral (MGP + AcademicTree relation=1 + Wikidata)",
+        desc: "Verified doctoral advisor–student mentorship links",
       },
       {
         num: fmtNum(s.core_stat_schools),
@@ -619,6 +627,380 @@
         d3.select(this).attr("opacity", 1);
         tip.classed("hidden", true);
       });
+  }
+
+  // -------------------------------------------------------------------------
+  // 2D LLM-Embedded Dissertation Topic Landscape (Analytics Tab)
+  // -------------------------------------------------------------------------
+  let topicMapCache = null;
+  let topicMapActiveCluster = null;
+  let topicMapSelectedId = null;
+  let topicMapSearchQuery = "";
+  let topicMapZoom = null;
+
+  function shortClusterName(fullName) {
+    return (fullName || "Core Statistics").trim();
+  }
+
+  async function loadDissertationTopicMap() {
+    if (topicMapCache) {
+      if (state.currentView === "sources") renderDissertationTopicMap();
+      return;
+    }
+    try {
+      const resp = await fetch("/api/topic_map");
+      if (!resp.ok) return;
+      topicMapCache = await resp.json();
+      renderTopicClusterLegend();
+      bindTopicMapControlsOnce();
+      if (state.currentView === "sources") {
+        renderDissertationTopicMap();
+      }
+    } catch (err) {
+      console.error("Failed loading dissertation topic map:", err);
+    }
+  }
+
+  let topicControlsBound = false;
+  function bindTopicMapControlsOnce() {
+    if (topicControlsBound) return;
+    topicControlsBound = true;
+
+    // Prevent mouse-wheel inside the plot from ever scrolling the outer page (even at min/max zoom!)
+    const stage = document.getElementById("topicMapStage");
+    stage?.addEventListener(
+      "wheel",
+      (e) => {
+        e.preventDefault();
+      },
+      { passive: false }
+    );
+
+    document.getElementById("topicMapResetBtn")?.addEventListener("click", () => {
+      topicMapActiveCluster = null;
+      topicMapSelectedId = null;
+      topicMapSearchQuery = "";
+      topicMapZoomScale = 1.0;
+      document.getElementById("topicDetailDrawer")?.classList.add("hidden");
+      renderTopicClusterLegend();
+      updateTopicMapHighlight();
+      const svgEl = document.getElementById("topicMapSvg");
+      if (svgEl && topicMapZoom) {
+        d3.select(svgEl).transition().duration(320).call(topicMapZoom.transform, d3.zoomIdentity);
+      }
+    });
+    document.getElementById("topicZoomInBtn")?.addEventListener("click", () => {
+      const svgEl = document.getElementById("topicMapSvg");
+      if (svgEl && topicMapZoom) d3.select(svgEl).transition().duration(220).call(topicMapZoom.scaleBy, 1.35);
+    });
+    document.getElementById("topicZoomOutBtn")?.addEventListener("click", () => {
+      const svgEl = document.getElementById("topicMapSvg");
+      if (svgEl && topicMapZoom) d3.select(svgEl).transition().duration(220).call(topicMapZoom.scaleBy, 0.74);
+    });
+  }
+
+  function renderTopicClusterLegend() {
+    const wrap = document.getElementById("topicClusterLegend");
+    if (!wrap || !topicMapCache) return;
+    const clusters = topicMapCache.clusters || [];
+    wrap.innerHTML = clusters
+      .map(
+        (c) => `
+        <button type="button" class="topic-cluster-pill ${topicMapActiveCluster === c.id ? "active" : ""}" data-cid="${c.id}" style="--pill-color:${c.color};" title="${esc(c.name)} (${fmtNum(c.count)} dissertations)">
+          <span class="tc-dot" style="background:${c.color};"></span>
+          <span>${esc(shortClusterName(c.name))}</span>
+        </button>`
+      )
+      .join("");
+    wrap.querySelectorAll(".topic-cluster-pill").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        const cid = Number(btn.dataset.cid);
+        topicMapActiveCluster = topicMapActiveCluster === cid ? null : cid;
+        renderTopicClusterLegend();
+        updateTopicMapHighlight();
+      });
+    });
+  }
+
+  function topicMatchesFilter(t) {
+    if (topicMapActiveCluster !== null && t.cluster_id !== topicMapActiveCluster) return false;
+    if (topicMapSearchQuery) {
+      const hay = `${t.label} ${(t.top_terms || []).join(" ")}`.toLowerCase();
+      if (!hay.includes(topicMapSearchQuery)) return false;
+    }
+    return true;
+  }
+
+  let topicMapZoomScale = 1.0;
+
+  function updateTopicMapHighlight() {
+    const svg = d3.select("#topicMapSvg");
+    if (svg.empty() || !topicMapCache) return;
+    const hasFilter = topicMapActiveCluster !== null || Boolean(topicMapSearchQuery);
+    const k = Math.max(0.65, topicMapZoomScale || 1.0);
+    const fontDiv = Math.pow(k, 0.78);
+
+    svg.selectAll(".topic-aura").attr("opacity", (c) => {
+      if (topicMapActiveCluster !== null) return c.id === topicMapActiveCluster ? 0.18 : 0.02;
+      if (topicMapSearchQuery) return 0.04;
+      return 0.11;
+    });
+
+    svg.selectAll(".topic-bubble")
+      .attr("opacity", (t) => (!hasFilter || topicMatchesFilter(t) ? 1 : 0.09))
+      .attr("fill-opacity", (t) => {
+        if (t.id === topicMapSelectedId) return 0.72;
+        if (topicMapSearchQuery && topicMatchesFilter(t)) return 0.65;
+        return 0.34;
+      })
+      .attr("stroke-opacity", (t) => {
+        if (t.id === topicMapSelectedId) return 1.0;
+        if (topicMapSearchQuery && topicMatchesFilter(t)) return 0.95;
+        return 0.78;
+      })
+      .attr("stroke-width", (t) => (t.id === topicMapSelectedId ? 2.2 / k : 1.05 / k))
+      .style("filter", (t) => {
+        if (t.id === topicMapSelectedId) {
+          const cl = (topicMapCache.clusters || []).find((c) => c.id === t.cluster_id);
+          return `drop-shadow(0 0 6px ${(cl && cl.color) || "#4f46e5"})`;
+        }
+        return null;
+      });
+
+    // Greedy volume-first label decluttering using zoom-compensated screen-space boxes
+    const topicsByVol = (topicMapCache.topics || []).slice().sort((a, b) => b.count - a.count);
+    const placedBoxes = [];
+    const visibleLabelIds = new Set();
+
+    for (const t of topicsByVol) {
+      if (hasFilter && !topicMatchesFilter(t) && t.id !== topicMapSelectedId) continue;
+      const effFs = (t._fontSize || 11) / fontDiv;
+      const halfW = t.label.length * effFs * 0.32 + 5 / k;
+      const halfH = effFs * 0.62 + 3 / k;
+      const x1 = t.x - halfW;
+      const x2 = t.x + halfW;
+      const y1 = t.y - halfH;
+      const y2 = t.y + halfH;
+
+      let collides = false;
+      if (t.id !== topicMapSelectedId && !topicMapSearchQuery) {
+        for (const b of placedBoxes) {
+          if (x1 < b[2] && x2 > b[0] && y1 < b[3] && y2 > b[1]) {
+            collides = true;
+            break;
+          }
+        }
+      }
+      if (!collides) {
+        placedBoxes.push([x1, y1, x2, y2]);
+        visibleLabelIds.add(t.id);
+      }
+    }
+
+    svg.selectAll(".topic-label")
+      .attr("display", (t) => (visibleLabelIds.has(t.id) ? null : "none"))
+      .attr("font-size", (t) => `${((t._fontSize || 11) / fontDiv).toFixed(2)}px`)
+      .style("stroke-width", `${(2.2 / k).toFixed(2)}px`)
+      .attr("opacity", (t) => {
+        if (t.id === topicMapSelectedId) return 1;
+        if (!hasFilter) return 0.96;
+        return topicMatchesFilter(t) ? 1 : 0.08;
+      });
+  }
+
+  function openTopicDetailDrawer(topic) {
+    const drawer = document.getElementById("topicDetailDrawer");
+    if (!drawer || !topic || !topicMapCache) return;
+    topicMapSelectedId = topic.id;
+    updateTopicMapHighlight();
+
+    const cluster = (topicMapCache.clusters || []).find((c) => c.id === topic.cluster_id) || { name: "", color: "#3b5bdb" };
+    const yrTxt = topic.year_min && topic.year_max ? `${topic.year_min}–${topic.year_max} (median ${topic.year_median || "—"})` : "Years n/a";
+    const termsHtml = (topic.top_terms || [])
+      .slice(0, 5)
+      .map((kw) => `<span class="era-chip" style="cursor:default;">${esc(kw)}</span>`)
+      .join("");
+
+    const samplesHtml = (topic.samples || [])
+      .map(
+        (s) => `
+        <div class="topic-sample-card" data-pid="${s.id}">
+          <div style="display:flex;justify-content:space-between;align-items:center;gap:6px;">
+            <strong style="font-size:13px;color:var(--text-primary);">${esc(s.name)}</strong>
+            <span class="field-pill" data-field="${esc(s.primary_field)}" style="font-size:10px;padding:1px 6px;">${esc(s.primary_field)}</span>
+          </div>
+          <div style="font-size:11.5px;color:var(--text-muted);margin:2px 0 5px;">${esc(s.school || "Institution unlisted")}${s.year ? " · " + s.year : ""}</div>
+          <div style="font-family:'Newsreader',Georgia,serif;font-style:italic;font-size:12.5px;color:var(--text-secondary);line-height:1.35;">“${esc(s.thesis)}”</div>
+        </div>`
+      )
+      .join("");
+
+    drawer.innerHTML = `
+      <div class="topic-detail-top">
+        <div>
+          <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
+            <span style="width:10px;height:10px;border-radius:50%;background:${cluster.color};display:inline-block;"></span>
+            <h4 style="margin:0;font-size:15.5px;color:var(--text-primary);text-transform:capitalize;">${esc(topic.label)}</h4>
+            <span style="font-size:12px;font-weight:600;color:var(--text-secondary);">${fmtNum(topic.count)} dissertations · ${yrTxt}</span>
+          </div>
+          <div style="font-size:11.5px;color:var(--text-muted);margin-top:3px;">Cluster: <strong>${esc(cluster.name)}</strong></div>
+          <div class="era-chips" style="margin-top:6px;">${termsHtml}</div>
+        </div>
+        <div style="display:flex;align-items:center;gap:8px;">
+          <button type="button" id="topicJumpSearchBtn" class="btn-primary" style="padding:6px 12px;font-size:12px;">Search in Directory →</button>
+          <button type="button" id="topicCloseDrawerBtn" class="mini-pill-btn" title="Close">&times;</button>
+        </div>
+      </div>
+      <div class="topic-samples-grid">${samplesHtml}</div>
+    `;
+    drawer.classList.remove("hidden");
+
+    document.getElementById("topicCloseDrawerBtn")?.addEventListener("click", () => {
+      topicMapSelectedId = null;
+      drawer.classList.add("hidden");
+      updateTopicMapHighlight();
+    });
+    document.getElementById("topicJumpSearchBtn")?.addEventListener("click", () => {
+      switchView("explore", { skipHistory: true });
+      submitMainSearch(topic.label);
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    });
+    drawer.querySelectorAll(".topic-sample-card").forEach((card) => {
+      card.addEventListener("click", () => openPersonInTree(Number(card.dataset.pid)));
+    });
+  }
+
+  function renderDissertationTopicMap() {
+    const svgEl = document.getElementById("topicMapSvg");
+    const stage = document.getElementById("topicMapStage");
+    const tip = document.getElementById("topicMapTooltip");
+    if (!svgEl || !stage || !topicMapCache) return;
+
+    const W = topicMapCache.width || 1000;
+    const H = topicMapCache.height || 660;
+    const clusters = topicMapCache.clusters || [];
+    const topics = topicMapCache.topics || [];
+    const clusterById = new Map(clusters.map((c) => [c.id, c]));
+
+    const svg = d3.select(svgEl);
+    svg.selectAll("*").remove();
+    svg.attr("viewBox", `0 0 ${W} ${H}`).attr("preserveAspectRatio", "xMidYMid meet");
+
+    // Soft ambient Gaussian aura filter for modern AI-lab embedding landscape look
+    const defs = svg.append("defs");
+    const blurF = defs.append("filter").attr("id", "topicAuraBlur").attr("x", "-40%").attr("y", "-40%").attr("width", "180%").attr("height", "180%");
+    blurF.append("feGaussianBlur").attr("stdDeviation", "38");
+
+    const rootG = svg.append("g").attr("class", "topic-map-root");
+
+    // Layer 0: Subtle blurred semantic nebula auras behind each domain cluster
+    rootG
+      .append("g")
+      .attr("class", "topic-auras-layer")
+      .selectAll("circle")
+      .data(clusters)
+      .join("circle")
+      .attr("class", "topic-aura")
+      .attr("cx", (c) => c.cx)
+      .attr("cy", (c) => c.cy)
+      .attr("r", (c) => c.r * 0.85)
+      .attr("fill", (c) => c.color)
+      .attr("opacity", 0.11)
+      .attr("filter", "url(#topicAuraBlur)");
+
+    // Layer 1: Balanced glassmorphic translucent nodes (4.2px satellites -> 26px major hubs, concave power scale so outliers don't squash mid-size topics)
+    const maxC = Math.max(...topics.map((t) => t.count), 100);
+    const minC = Math.min(...topics.map((t) => t.count), 15);
+    topics.forEach((t) => {
+      const norm = Math.max(0, (t.count - minC) / (maxC - minC + 1e-6));
+      t._dispR = 4.2 + Math.pow(norm, 0.48) * 21.8;
+      t._fontSize = 8.2 + Math.pow(norm, 0.46) * 14.3;
+    });
+
+    const topicsSorted = topics.slice().sort((a, b) => b._dispR - a._dispR);
+    const bubbleLayer = rootG.append("g").attr("class", "topic-bubbles-layer");
+    bubbleLayer
+      .selectAll("circle")
+      .data(topicsSorted, (d) => d.id)
+      .join("circle")
+      .attr("class", "topic-bubble")
+      .attr("cx", (d) => d.x)
+      .attr("cy", (d) => d.y)
+      .attr("r", (d) => d._dispR)
+      .attr("fill", (d) => (clusterById.get(d.cluster_id) || {}).color || "#4f46e5")
+      .attr("fill-opacity", 0.34)
+      .attr("stroke", (d) => (clusterById.get(d.cluster_id) || {}).color || "#4f46e5")
+      .attr("stroke-opacity", 0.78)
+      .attr("stroke-width", 1.05)
+      .on("mouseenter", function (event, d) {
+        const k = Math.max(0.65, topicMapZoomScale || 1.0);
+        const col = (clusterById.get(d.cluster_id) || {}).color || "#4f46e5";
+        d3.select(this)
+          .attr("fill-opacity", 0.72)
+          .attr("stroke-opacity", 1.0)
+          .attr("stroke-width", 2.0 / k)
+          .style("filter", `drop-shadow(0 0 6px ${col})`);
+        const cl = clusterById.get(d.cluster_id) || { name: "", color: "#3b5bdb" };
+        const pct = ((d.count / (topicMapCache.total_dissertations || 1)) * 100).toFixed(1);
+        const f = d.fields || {};
+        const sampleLines = (d.samples || [])
+          .slice(0, 2)
+          .map((s) => `<div style="margin-top:4px;font-style:italic;color:var(--text-secondary);">“${esc(trunc(s.thesis, 78))}” <span style="font-style:normal;color:var(--text-muted);">(${esc(s.name)}${s.year ? ", " + s.year : ""})</span></div>`)
+          .join("");
+        tip.innerHTML = `
+          <div style="display:flex;align-items:center;gap:6px;margin-bottom:3px;">
+            <span style="width:8px;height:8px;border-radius:50%;background:${cl.color};flex-shrink:0;"></span>
+            <strong style="font-size:13px;text-transform:capitalize;">${esc(d.label)}</strong>
+          </div>
+          <div style="font-size:11px;color:var(--text-muted);margin-bottom:4px;">${esc(cl.name)}</div>
+          <div style="font-weight:700;">${fmtNum(d.count)} dissertations <span style="font-weight:500;color:var(--text-muted);">(${pct}% · ${d.year_min || "?"}–${d.year_max || "?"})</span></div>
+          <div style="font-size:11px;color:var(--text-secondary);margin-top:2px;">Stat: ${fmtNum(f.Statistics || 0)} · Biostat: ${fmtNum(f.Biostatistics || 0)} · Prob: ${fmtNum(f.Probability || 0)}</div>
+          ${sampleLines}
+          <div style="font-size:10.5px;color:var(--accent);font-weight:600;margin-top:5px;">Click bubble to explore dissertations →</div>
+        `;
+        tip.classList.remove("hidden");
+      })
+      .on("mousemove", function (event) {
+        const rect = stage.getBoundingClientRect();
+        const left = Math.min(rect.width - 310, Math.max(8, event.clientX - rect.left + 14));
+        const top = Math.min(rect.height - 170, Math.max(8, event.clientY - rect.top - 24));
+        tip.style.left = `${left}px`;
+        tip.style.top = `${top}px`;
+      })
+      .on("mouseleave", function () {
+        tip.classList.add("hidden");
+        updateTopicMapHighlight();
+      })
+      .on("click", (event, d) => {
+        event.stopPropagation();
+        openTopicDetailDrawer(d);
+      });
+
+    // Layer 2: Strongly volume-scaled topic labels (8.2px satellites -> 22.5px landmark hubs, zoom-compensated)
+    const labelLayer = rootG.append("g").attr("class", "topic-labels-layer");
+    labelLayer
+      .selectAll("text")
+      .data(topics.slice().sort((a, b) => a.count - b.count), (d) => d.id)
+      .join("text")
+      .attr("class", "topic-label")
+      .attr("x", (d) => d.x)
+      .attr("y", (d) => d.y)
+      .attr("font-size", (d) => `${d._fontSize.toFixed(1)}px`)
+      .attr("font-weight", (d) => (d._fontSize >= 13.5 ? 700 : d._fontSize >= 10.0 ? 600 : 500))
+      .text((d) => d.label);
+
+    topicMapZoomScale = 1.0;
+    topicMapZoom = d3
+      .zoom()
+      .scaleExtent([0.65, 6.0])
+      .on("zoom", (event) => {
+        rootG.attr("transform", event.transform);
+        topicMapZoomScale = event.transform.k;
+        updateTopicMapHighlight();
+      });
+    svg.call(topicMapZoom);
+
+    updateTopicMapHighlight();
   }
 
   // -------------------------------------------------------------------------
@@ -2565,7 +2947,19 @@
       if (e.key === "Escape") {
         toggleMobileFilters(false);
         closeTreeDepthPopover();
+        document.getElementById("aboutModal")?.classList.add("hidden");
       }
+    });
+
+    const aboutModal = document.getElementById("aboutModal");
+    document.getElementById("aboutLinkBtn")?.addEventListener("click", () => {
+      aboutModal?.classList.remove("hidden");
+    });
+    document.getElementById("aboutCloseBtn")?.addEventListener("click", () => {
+      aboutModal?.classList.add("hidden");
+    });
+    aboutModal?.addEventListener("click", (e) => {
+      if (e.target === aboutModal) aboutModal.classList.add("hidden");
     });
 
     const dossierPanel = document.getElementById("dossierPanel");

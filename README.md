@@ -1,6 +1,12 @@
 # StatLink — Academic Family Tree of Statistics, Biostatistics & Probability
 
-An interactive, mobile-responsive academic genealogy explorer unifying **552,844 deduplicated PhD scholars** and **592,859 doctoral advisor–student links** (`85,797` Core Statistics, Biostatistics & Probability PhDs, `143,722` Broad Quantitative PhDs, `43,097` verified personal websites, and `21,194` scholar portraits) across **207 tracked Statistics/Biostatistics PhD-granting institutions** and **3,042 global universities**.
+An interactive, mobile-responsive academic genealogy explorer unifying **550,843 deduplicated PhD scholars** and **590,063 doctoral advisor–student links** (`84,424` Core Statistics, Biostatistics & Probability PhDs, `142,800+` Broad Quantitative PhDs, `43,000+` verified personal websites, and `21,000+` scholar portraits) across **207 tracked Statistics/Biostatistics PhD-granting institutions** and **3,042 global universities**.
+
+## GitHub Pages (Serverless Static Deployment)
+
+The repository includes a pre-built, 100% serverless static site in **`docs/`** (built by `scripts/build_gh_pages.py` + `static/static_api.js` using compact gzipped indexes, a binary `uint32` graph, and 256 on-demand JSON detail shards). To publish live on GitHub Pages:
+1. Open **Settings → Pages** in this repository.
+2. Under **Build and deployment**, set **Source** to **Deploy from a branch**, **Branch** to `main`, and **Folder** to **`/docs`**, then click **Save**.
 
 ## Quick Start
 

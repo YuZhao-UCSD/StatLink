@@ -221,6 +221,7 @@ query($unitId: ID!, $more: String) {
         title
         published
         subjects
+        nativeFileName
         localIDs { id subScheme }
         authors { nodes { name orcid } }
         contributors { nodes { name role } }
@@ -281,6 +282,11 @@ def harvest_uc_campus(unit_id: str, school_name: str, known_advisor_sigs: set):
 
                 title = re.sub(r"\s+", " ", (n.get("title") or "").strip())
                 if MASTERS_REJECT_RE.search(title):
+                    continue
+                # Reject UC Master's theses via ProQuest degree code in nativeFileName (e.g. _0031N_ vs _0031D_)
+                nfn = (n.get("nativeFileName") or "").strip()
+                m_deg = re.search(r"_\d{4}([A-Za-z])_", nfn)
+                if m_deg and m_deg.group(1).upper() != "D":
                     continue
 
                 subjs = ", ".join(n.get("subjects") or [])

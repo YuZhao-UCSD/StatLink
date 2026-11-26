@@ -539,6 +539,28 @@ def api_stats():
     })
 
 
+_TOPIC_MAP_CACHE = None
+
+
+@app.route("/api/topic_map")
+def api_topic_map():
+    """Returns precomputed 2D LLM-embedded dissertation topic clusters for Core Stat/Biostat/Prob PhDs."""
+    global _TOPIC_MAP_CACHE
+    if _TOPIC_MAP_CACHE is not None:
+        return jsonify(_TOPIC_MAP_CACHE)
+    db = get_db()
+    row = db.execute("SELECT value_json FROM meta_stats WHERE key = 'dissertation_topic_map'").fetchone()
+    if row and row["value_json"]:
+        _TOPIC_MAP_CACHE = json.loads(row["value_json"])
+        return jsonify(_TOPIC_MAP_CACHE)
+    json_path = os.path.join(BASE_DIR, "data", "dissertation_topic_map.json")
+    if os.path.exists(json_path):
+        with open(json_path, "r", encoding="utf-8") as f:
+            _TOPIC_MAP_CACHE = json.load(f)
+        return jsonify(_TOPIC_MAP_CACHE)
+    return jsonify({"error": "Dissertation topic map not generated yet"}), 404
+
+
 _LUCKY_IDS_CACHE = None
 
 
