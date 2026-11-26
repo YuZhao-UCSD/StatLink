@@ -246,7 +246,7 @@ def main():
     # Convert root-relative `/static/...` paths to relative `static/...` so GitHub Pages project URLs
     # (https://<user>.github.io/StatLineage/) resolve cleanly, and inject `static/static_api.js` before `app.js`!
     html_txt = html_txt.replace('href="/static/', 'href="static/')
-    html_txt = html_txt.replace('src="/static/app.js', 'src="static/static_api.js?v=1"></script>\n  <script src="static/app.js')
+    html_txt = html_txt.replace('src="/static/app.js', 'src="static/static_api.js?v=2"></script>\n  <script src="static/app.js')
     with open(os.path.join(DOCS_DIR, "index.html"), "w", encoding="utf-8") as f:
         f.write(html_txt)
 

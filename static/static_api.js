@@ -449,6 +449,27 @@
     const qToks = qNorm ? (qNorm.match(/[a-z0-9]+/g) || []) : [];
     const qSquashed = qToks.join("");
 
+    // Nickname map matching app.py
+    const NICK_GROUPS = [
+      ["robert", "rob", "bob", "bobby"], ["richard", "rick", "dick", "rich"],
+      ["william", "bill", "will", "billy"], ["james", "jim", "jimmy"],
+      ["john", "jack", "johnny", "jon"], ["michael", "mike", "mikhail"],
+      ["david", "dave"], ["daniel", "dan", "danny"], ["thomas", "tom", "tommy"],
+      ["charles", "chuck", "charlie"], ["joseph", "joe"], ["edward", "ed", "ted"],
+      ["anthony", "tony"], ["stephen", "steve", "steven"], ["peter", "pete"],
+      ["christopher", "chris"], ["nicholas", "nick"], ["andrew", "andy"],
+    ];
+    const nickAlts = (tok) => {
+      for (const g of NICK_GROUPS) if (g.includes(tok)) return g;
+      return [tok];
+    };
+    const tokenInHay = (tok, hay, haySq) => {
+      if (hay.includes(tok)) return true;
+      if (qToks.length === 1 && tok.length >= 6 && haySq.includes(tok)) return true;
+      const alts = nickAlts(tok);
+      return alts.length > 1 && alts.some((a) => hay.includes(a));
+    };
+
     let matches = [];
     let expandedFromAll = false;
     let fuzzyQuery = "";
@@ -457,14 +478,15 @@
       const nn = r[2];
       const al = r[3] ? r[3].toLowerCase() : "";
       const hay = al ? `${nn} ${al}` : nn;
+      const haySq = nn.replace(/[\s\-]/g, "");
       const sch = r[4] >= 0 ? (schoolsList[r[4]] ? schoolsList[r[4]].norm_school : "") : "";
       let sc = 0;
       if (nn === qNorm) sc += 200;
-      else if (nn.replace(/[\s\-]/g, "") === qSquashed) sc += 170;
+      else if (haySq === qSquashed) sc += 175;
       else if (nn.startsWith(qNorm)) sc += 120;
       else if (hay.includes(qNorm)) sc += 90;
-      else if (qToks.every((t) => hay.includes(t))) sc += 75;
-      else if (sch && qToks.every((t) => hay.includes(t) || sch.includes(t))) sc += 30;
+      else if (qToks.every((t) => tokenInHay(t, hay, haySq))) sc += 75;
+      else if (sch && qToks.every((t) => tokenInHay(t, hay, haySq) || sch.includes(t))) sc += 30;
       else if (isFuzzy) sc += 25;
       else return -1;
       if (r[7] & 1) sc += 25;
@@ -523,6 +545,26 @@
           fuzzyQuery = fuzzyHits[0][1][1];
           matches = matches.concat(fuzzyHits.slice(0, 80));
         }
+      }
+      // Topic-map fallback when user searches a dissertation topic (e.g. clicking "Search in Directory" from Dissertation Topic Landscape)
+      if (matches.length < 3) {
+        try {
+          if (!topicMapPromise) topicMapPromise = origFetch("data/topic_map.json").then((r) => r.json());
+          const tm = await topicMapPromise;
+          const seen = new Set(matches.map((m) => m[1][0]));
+          for (const tp of tm.topics || []) {
+            const hay = `${tp.label} ${(tp.top_terms || []).join(" ")}`.toLowerCase();
+            if (qToks.every((t) => hay.includes(t))) {
+              for (const s of tp.samples || []) {
+                const pr = personById.get(s.id);
+                if (pr && !seen.has(pr[0]) && passesBaseFilters(pr)) {
+                  seen.add(pr[0]);
+                  matches.push([60, pr]);
+                }
+              }
+            }
+          }
+        } catch (_e) {}
       }
     } else {
       const pool = descGenMap ? Array.from(descGenMap.keys()).map((id) => personById.get(id)).filter(Boolean) : peopleArr;
@@ -677,7 +719,31 @@
       return { source: s, target: t };
     });
 
-    return { focal_id: personId, nodes, links };
+    const ancNodes = nodes.filter((n) => n.gen_offset < 0);
+    const descNodes = nodes.filter((n) => n.gen_offset > 0);
+    let earliestAnc = null;
+    for (const an of ancNodes) {
+      if (
+        !earliestAnc ||
+        an.gen_offset < earliestAnc.gen_offset ||
+        (an.gen_offset === earliestAnc.gen_offset && (an.year || 9999) < (earliestAnc.year || 9999))
+      ) {
+        earliestAnc = an;
+      }
+    }
+
+    return {
+      focal_id: personId,
+      nodes,
+      links,
+      stats: {
+        total_nodes_shown: nodes.length,
+        ancestor_count: ancNodes.length,
+        descendant_shown_count: descNodes.length,
+        total_descendant_count: focal[10],
+        earliest_ancestor: earliestAnc ? { id: earliestAnc.id, name: earliestAnc.name, year: earliestAnc.year } : null,
+      },
+    };
   }
 
   async function handleLineagePath(sp) {
@@ -738,7 +804,17 @@
       })
       .filter(Boolean);
     const links = keepEdges.filter(([s, t]) => keepSet.has(s) && keepSet.has(t)).map(([s, t]) => ({ source: s, target: t }));
-    return { focal_id: stuId, ancestor_id: ancId, nodes, links };
+    const stuRow = personById.get(stuId);
+    const ancRow = personById.get(ancId);
+    return {
+      focal_id: stuId,
+      focal_name: stuRow ? stuRow[1] : `#${stuId}`,
+      ancestor_id: ancId,
+      ancestor_name: ancRow ? ancRow[1] : `#${ancId}`,
+      generations: upDist.get(ancId) || maxG,
+      nodes,
+      links,
+    };
   }
 
   async function handleConnection(sp) {

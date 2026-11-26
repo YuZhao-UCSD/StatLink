@@ -11,8 +11,8 @@ The repository includes a pre-built, 100% serverless static site in **`docs/`** 
 ## Quick Start
 
 ```bash
-git clone https://github.com/YuZhao-UCSD/StatLineage.git
-cd StatLineage
+git clone https://github.com/YuZhao-UCSD/StatLink.git
+cd StatLink
 pip install -r requirements.txt
 python app.py
 ```
