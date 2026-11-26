@@ -2342,7 +2342,7 @@
       }
       const mySeq = ++reqSeq;
       try {
-        const resp = await fetch(`/api/search?q=${encodeURIComponent(val)}&scope=all&per_page=12`);
+        const resp = await fetch(`/api/search?q=${encodeURIComponent(val)}&scope=all&per_page=12&autocomplete=1`);
         const data = await resp.json();
         if (mySeq !== reqSeq || document.activeElement !== inp) return;
         const rows = rankAncestorCandidates(data.results || []);
@@ -2455,7 +2455,7 @@
         drop.classList.add("hidden");
         return;
       }
-      const resp = await fetch(`/api/search?q=${encodeURIComponent(q)}&scope=all&per_page=12`);
+      const resp = await fetch(`/api/search?q=${encodeURIComponent(q)}&scope=all&per_page=12&autocomplete=1`);
       const data = await resp.json();
       const rows = data.results || [];
       if (!rows.length) {
@@ -2515,7 +2515,7 @@
       }
       const mySeq = ++sugReqSeq;
       try {
-        const resp = await fetch(`/api/search?q=${encodeURIComponent(q)}&scope=${encodeURIComponent(state.scope)}&per_page=8`);
+        const resp = await fetch(`/api/search?q=${encodeURIComponent(q)}&scope=${encodeURIComponent(state.scope)}&per_page=8&autocomplete=1`);
         const data = await resp.json();
         if (mySeq !== sugReqSeq || document.activeElement !== mainInp) return;
         const rows = data.results || [];

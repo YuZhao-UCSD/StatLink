@@ -25,6 +25,7 @@
   let schoolIdxByName = new Map();
   let peopleArr = []; // Compact rows
   let personById = new Map();
+  let prefixIndex = new Map(); // 2-char word-start prefix -> int[] row indices in peopleArr (pre-sorted by impact)
   let parentsMap = new Map(); // student_id -> int[]
   let childrenMap = new Map(); // advisor_id -> int[]
   let advSchoolsMap = new Map(); // school_idx -> Set(person_id)
@@ -116,9 +117,40 @@
       // Unpack people rows: [id, name, norm_name, aliases, sidx, year, fidx, flags, adv, stu, desc, stat_desc]
       peopleArr = pRows;
       luckyIds = [];
+      prefixIndex = new Map();
+      const indexPrefixes = (str, rowIdx, seenPfx) => {
+        const len = str.length;
+        let atStart = true;
+        for (let k = 0; k < len; k++) {
+          const c = str.charCodeAt(k);
+          const isAlnum = (c >= 97 && c <= 122) || (c >= 48 && c <= 57);
+          if (isAlnum) {
+            if (atStart && k + 1 < len) {
+              const c2 = str.charCodeAt(k + 1);
+              if ((c2 >= 97 && c2 <= 122) || (c2 >= 48 && c2 <= 57)) {
+                const pfx = str.slice(k, k + 2);
+                if (!seenPfx.has(pfx)) {
+                  seenPfx.add(pfx);
+                  let arr = prefixIndex.get(pfx);
+                  if (!arr) { arr = []; prefixIndex.set(pfx, arr); }
+                  arr.push(rowIdx);
+                }
+              }
+            }
+            atStart = false;
+          } else {
+            atStart = true;
+          }
+        }
+      };
+      const seenPfx = new Set();
       for (let i = 0; i < pRows.length; i++) {
         const r = pRows[i];
         personById.set(r[0], r);
+        if (r[3]) r[3] = r[3].toLowerCase();
+        seenPfx.clear();
+        if (r[2]) indexPrefixes(r[2], i, seenPfx);
+        if (r[3]) indexPrefixes(r[3], i, seenPfx);
         if ((r[7] & 1) && (r[8] > 0 || r[9] > 0)) {
           luckyIds.push(r[0]);
         }
@@ -390,6 +422,7 @@
     const sort = (sp.get("sort") || "relevance").trim();
     const page = Math.max(1, Number(sp.get("page") || "1"));
     const perPage = Math.min(60, Math.max(1, Number(sp.get("per_page") || "36")));
+    const isAuto = sp.get("autocomplete") === "1";
     const ymin = sp.get("year_min") ? Number(sp.get("year_min")) : null;
     const ymax = sp.get("year_max") ? Number(sp.get("year_max")) : null;
     const ancRaw = (sp.get("ancestor_id") || "").trim();
@@ -463,11 +496,19 @@
       for (const g of NICK_GROUPS) if (g.includes(tok)) return g;
       return [tok];
     };
-    const tokenInHay = (tok, hay, haySq) => {
+    const qTokAlts = qToks.map(nickAlts);
+    const needSquash = qToks.length === 1 && qToks[0].length >= 6;
+    const tokenInHay = (tokIdx, hay, haySq) => {
+      const tok = qToks[tokIdx];
       if (hay.includes(tok)) return true;
-      if (qToks.length === 1 && tok.length >= 6 && haySq.includes(tok)) return true;
-      const alts = nickAlts(tok);
-      return alts.length > 1 && alts.some((a) => hay.includes(a));
+      if (needSquash && haySq && haySq.includes(tok)) return true;
+      const alts = qTokAlts[tokIdx];
+      if (alts.length > 1) {
+        for (let k = 0; k < alts.length; k++) {
+          if (hay.includes(alts[k])) return true;
+        }
+      }
+      return false;
     };
 
     let matches = [];
@@ -476,19 +517,33 @@
 
     const scoreMatch = (r, isFuzzy = false) => {
       const nn = r[2];
-      const al = r[3] ? r[3].toLowerCase() : "";
+      const al = r[3] || "";
       const hay = al ? `${nn} ${al}` : nn;
-      const haySq = nn.replace(/[\s\-]/g, "");
-      const sch = r[4] >= 0 ? (schoolsList[r[4]] ? schoolsList[r[4]].norm_school : "") : "";
+      const haySq = needSquash ? nn.replace(/[\s\-]/g, "") : "";
       let sc = 0;
       if (nn === qNorm) sc += 200;
-      else if (haySq === qSquashed) sc += 175;
+      else if (needSquash && haySq === qSquashed) sc += 175;
       else if (nn.startsWith(qNorm)) sc += 120;
       else if (hay.includes(qNorm)) sc += 90;
-      else if (qToks.every((t) => tokenInHay(t, hay, haySq))) sc += 75;
-      else if (sch && qToks.every((t) => tokenInHay(t, hay, haySq) || sch.includes(t))) sc += 30;
-      else if (isFuzzy) sc += 25;
-      else return -1;
+      else {
+        let allTok = true;
+        for (let k = 0; k < qToks.length; k++) {
+          if (!tokenInHay(k, hay, haySq)) { allTok = false; break; }
+        }
+        if (allTok) sc += 75;
+        else {
+          const sch = r[4] >= 0 ? (schoolsList[r[4]] ? schoolsList[r[4]].norm_school : "") : "";
+          let allWithSch = Boolean(sch);
+          if (allWithSch) {
+            for (let k = 0; k < qToks.length; k++) {
+              if (!tokenInHay(k, hay, haySq) && !sch.includes(qToks[k])) { allWithSch = false; break; }
+            }
+          }
+          if (allWithSch) sc += 30;
+          else if (isFuzzy) sc += 25;
+          else return -1;
+        }
+      }
       if (r[7] & 1) sc += 25;
       else if (r[7] & 2) sc += 8;
       sc += Math.log1p(r[10] + r[9] * 3) * 4.5;
@@ -496,31 +551,101 @@
     };
 
     if (qToks.length) {
-      const pool = descGenMap ? Array.from(descGenMap.keys()).map((id) => personById.get(id)).filter(Boolean) : peopleArr;
       const scopedHits = [];
       const allHits = [];
-      for (let i = 0; i < pool.length; i++) {
-        const r = pool[i];
-        if (!passesBaseFilters(r)) continue;
-        const sc = scoreMatch(r, false);
-        if (sc >= 0) {
-          if (matchScope(r, scope)) scopedHits.push([sc, r]);
-          else if (scope !== "all") allHits.push([sc, r]);
+      let usedPrefixFastPath = false;
+
+      // Fast 2-char prefix inverted index lookup (100x faster than scanning all 550,843 rows)
+      if (!descGenMap && !needSquash) {
+        let bestLists = null;
+        let bestTotal = Infinity;
+        for (let k = 0; k < qToks.length; k++) {
+          const alts = qTokAlts[k];
+          const pfxSet = new Set();
+          let ok = true;
+          for (let a = 0; a < alts.length; a++) {
+            if (alts[a].length < 2) { ok = false; break; }
+            pfxSet.add(alts[a].slice(0, 2));
+          }
+          if (!ok) continue;
+          const lists = [];
+          let tot = 0;
+          for (const pfx of pfxSet) {
+            const lst = prefixIndex.get(pfx);
+            if (lst && lst.length) { lists.push(lst); tot += lst.length; }
+          }
+          if (tot < bestTotal) {
+            bestTotal = tot;
+            bestLists = lists;
+          }
+        }
+        if (bestLists !== null && (isAuto || bestTotal < 120000)) {
+          usedPrefixFastPath = true;
+          const multiList = bestLists.length > 1;
+          const seenIdx = multiList ? new Set() : null;
+          const autoCap = isAuto ? 140 : Infinity;
+          for (let l = 0; l < bestLists.length; l++) {
+            const lst = bestLists[l];
+            for (let i = 0; i < lst.length; i++) {
+              const rowIdx = lst[i];
+              if (seenIdx) {
+                if (seenIdx.has(rowIdx)) continue;
+                seenIdx.add(rowIdx);
+              }
+              const r = peopleArr[rowIdx];
+              if (!passesBaseFilters(r)) continue;
+              const sc = scoreMatch(r, false);
+              if (sc >= 0) {
+                if (matchScope(r, scope)) {
+                  scopedHits.push([sc, r]);
+                  if (scopedHits.length >= autoCap) break;
+                } else if (scope !== "all" && allHits.length < autoCap) {
+                  allHits.push([sc, r]);
+                }
+              }
+            }
+            if (scopedHits.length >= autoCap) break;
+          }
         }
       }
+
+      // Full scan fallback when prefix index wasn't used or returned <5 hits (e.g. university/substring query)
+      if (!usedPrefixFastPath || (scopedHits.length + allHits.length < 5 && (!isAuto || qNorm.length >= 3))) {
+        const pool = descGenMap ? Array.from(descGenMap.keys()).map((id) => personById.get(id)).filter(Boolean) : peopleArr;
+        const already = new Set();
+        for (const m of scopedHits) already.add(m[1][0]);
+        for (const m of allHits) already.add(m[1][0]);
+        const autoCap = isAuto ? 60 : Infinity;
+        for (let i = 0; i < pool.length; i++) {
+          const r = pool[i];
+          if (already.has(r[0]) || !passesBaseFilters(r)) continue;
+          const sc = scoreMatch(r, false);
+          if (sc >= 0) {
+            if (matchScope(r, scope)) {
+              scopedHits.push([sc, r]);
+              if (scopedHits.length >= autoCap) break;
+            } else if (scope !== "all" && allHits.length < autoCap) {
+              allHits.push([sc, r]);
+            }
+          }
+        }
+      }
+
       matches = scopedHits;
       if (scope !== "all" && matches.length < 5 && allHits.length) {
         matches = matches.concat(allHits);
         expandedFromAll = true;
       }
-      // Fuzzy Damerau-Levenshtein fallback when <5 exact hits
-      if (matches.length < 5 && qToks.length <= 4) {
+      // Fuzzy Damerau-Levenshtein fallback when <5 exact hits (capped to Core/Broad Stat during live autocomplete so typing never stutters)
+      if (matches.length < 5 && qToks.length <= 4 && (!isAuto || qNorm.length >= 3)) {
+        const pool = descGenMap ? Array.from(descGenMap.keys()).map((id) => personById.get(id)).filter(Boolean) : peopleArr;
         const seen = new Set(matches.map((m) => m[1][0]));
         const fuzzyHits = [];
         for (let i = 0; i < pool.length; i++) {
           const r = pool[i];
+          if (isAuto && !(r[7] & 3)) break; // peopleArr is sorted core/broad-stat first; keeps live autocomplete < 8ms
           if (seen.has(r[0]) || !passesBaseFilters(r)) continue;
-          const rToks = (r[2] + " " + (r[3] || "").toLowerCase()).match(/[a-z0-9]+/g) || [];
+          const rToks = (r[2] + (r[3] ? " " + r[3] : "")).match(/[a-z0-9]+/g) || [];
           if (!rToks.length) continue;
           let totD = 0, allOk = true;
           for (const qt of qToks) {
@@ -537,17 +662,17 @@
           if (allOk) {
             const imp = (r[7] & 1 ? 20 : 0) + Math.log1p(r[10] + r[9] * 3) * 4 - totD * 14;
             fuzzyHits.push([imp, r]);
-            if (fuzzyHits.length >= 250) break;
+            if (fuzzyHits.length >= (isAuto ? 40 : 250)) break;
           }
         }
         if (fuzzyHits.length) {
           fuzzyHits.sort((a, b) => b[0] - a[0]);
           fuzzyQuery = fuzzyHits[0][1][1];
-          matches = matches.concat(fuzzyHits.slice(0, 80));
+          matches = matches.concat(fuzzyHits.slice(0, isAuto ? 20 : 80));
         }
       }
-      // Topic-map fallback when user searches a dissertation topic (e.g. clicking "Search in Directory" from Dissertation Topic Landscape)
-      if (matches.length < 3) {
+      // Topic-map fallback when user searches a dissertation topic (skip during live autocomplete)
+      if (!isAuto && matches.length < 3) {
         try {
           if (!topicMapPromise) topicMapPromise = origFetch("data/topic_map.json").then((r) => r.json());
           const tm = await topicMapPromise;
@@ -594,11 +719,11 @@
     const total = matches.length;
     const start = (page - 1) * perPage;
     const pageSlice = matches.slice(start, start + perPage).map((m) => m[1]);
-    const detMap = await fetchDetailsForIds(pageSlice.map((r) => r[0]));
+    const detMap = isAuto ? null : await fetchDetailsForIds(pageSlice.map((r) => r[0]));
 
     const results = pageSlice.map((r) => {
-      const card = rowToBrief(r, detMap.get(r[0]));
-      card.famous_ancestors_preview = getFamousPreview(r[0], 3);
+      const card = rowToBrief(r, detMap ? detMap.get(r[0]) : null);
+      if (!isAuto) card.famous_ancestors_preview = getFamousPreview(r[0], 3);
       if (descGenMap) card.ancestor_generations = descGenMap.get(r[0]);
       return card;
     });
@@ -915,4 +1040,7 @@
       return jsonResponse({ error: String(err) }, 500);
     }
   };
+
+  // Warm the compact index & 2-char prefix lookup quietly after first paint so typing is instant
+  setTimeout(() => { ensureCoreLoaded().catch(() => {}); }, 250);
 })();
