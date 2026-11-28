@@ -1,6 +1,6 @@
 # StatLineage Data Sources, Entity Resolution & ETL Pipeline Reference
 
-This reference documents every raw data source, SPARQL/GraphQL/REST query, normalization rule, entity-resolution algorithm, discipline classifier, and global multi-wave gap-closing harvester required to rebuild `data/stat_genealogy.db` (`566,675` PhD scholars, `607,027` strictly doctoral advisor–student edges, `101,123` Core Stat/Biostat/Prob PhDs, `159,500+` Broad Quantitative PhDs across `207` tracked statistical institutions and `3,000+` universities) from ground zero.
+This reference documents every raw data source, SPARQL/GraphQL/REST query, normalization rule, entity-resolution algorithm, discipline classifier, and global multi-wave gap-closing harvester required to rebuild `data/stat_genealogy.db` (`566,344` PhD scholars, `606,643` strictly doctoral advisor–student edges, `100,927` Core Stat/Biostat/Prob PhDs, `159,500+` Broad Quantitative PhDs across `207` tracked statistical institutions and `3,000+` universities) from ground zero.
 
 ---
 

@@ -10,7 +10,7 @@ description: >-
 
 # StatLink (formerly StatLineage) — Ground-Zero Implementation Blueprint
 
-**StatLink** is a high-recall, precision-calibrated, strictly read-only interactive academic genealogy web platform unifying **566,675 PhD scholars** and **607,027 doctoral mentorship edges** (`101,123` Core Statistics, Biostatistics & Probability PhDs and `159,500+` Broad Quantitative PhDs) across **207 tracked statistical PhD institutions** and **3,000+ global universities**, served via Flask + SQLite FTS5 + D3.js v7 on `http://127.0.0.1:5050` (and deployed serverlessly to GitHub Pages in `docs/`).
+**StatLink** is a high-recall, precision-calibrated, strictly read-only interactive academic genealogy web platform unifying **566,344 PhD scholars** and **606,643 doctoral mentorship edges** (`100,927` Core Statistics, Biostatistics & Probability PhDs and `159,500+` Broad Quantitative PhDs) across **207 tracked statistical PhD institutions** and **3,000+ global universities**, served via Flask + SQLite FTS5 + D3.js v7 on `http://127.0.0.1:5050` (and deployed serverlessly to GitHub Pages in `docs/`).
 
 For deep-dive specifications, read the companion reference manuals in `./references/`:
 - **[Data Sources, Entity Resolution & ETL Pipeline](./references/data_sources_and_etl_pipeline.md)** — Raw dataset schemas (`MGP`, `AcademicTree`, `Wikidata`), entity resolution tiers, TF-IDF + LogisticRegression classifier, pre-2015 `AFT` subtree precision calibration, and all 7 post-2013 ProQuest / Cloudflare gap-closing harvesters (`UC eScholarship`, `DSpace 7`, `DigitalCommons OAI-PMH`, `HAL`, `DataCite`, `OpenAlex`, `UF Commencement PDFs`, `ORCID + Crossref`, `NIH PubMed Methodology`, and `Faculty CVs`).
