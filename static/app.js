@@ -798,8 +798,8 @@
       const halfW = t.label.length * effFs * 0.265 + 3.0 / k;
       const halfH = effFs * 0.54 + 2.0 / k;
       const dispR = t._dispR || 10;
-      const n1 = Math.min(dispR * 0.55, 11.0 / k);
-      const n2 = Math.min(dispR + 2.5 / k, 21.0 / k);
+      const n1 = Math.min(dispR * 0.55, 12.0 / k);
+      const n2 = Math.min(dispR + 3.0 / k, 24.0 / k);
       const candidates =
         t.id === topicMapSelectedId || topicMapSearchQuery || dispR < 8.5
           ? [0]
@@ -963,8 +963,8 @@
     const minC = Math.min(...topics.map((t) => t.count), 15);
     topics.forEach((t) => {
       const norm = Math.max(0, (t.count - minC) / (maxC - minC + 1e-6));
-      t._dispR = 4.2 + Math.pow(norm, 0.48) * 21.8;
-      t._fontSize = 7.8 + Math.pow(norm, 0.52) * 8.2;
+      t._dispR = 4.4 + Math.pow(norm, 0.48) * 22.6;
+      t._fontSize = 9.6 + Math.pow(norm, 0.50) * 9.6;
     });
 
     const topicsSorted = topics.slice().sort((a, b) => b._dispR - a._dispR);
@@ -1036,7 +1036,7 @@
       .attr("x", (d) => d.x)
       .attr("y", (d) => d.y)
       .attr("font-size", (d) => `${d._fontSize.toFixed(1)}px`)
-      .attr("font-weight", (d) => (d._fontSize >= 12.2 ? 700 : d._fontSize >= 9.6 ? 600 : 500))
+      .attr("font-weight", (d) => (d._fontSize >= 15.0 ? 700 : d._fontSize >= 12.2 ? 600 : 500))
       .text((d) => d.label);
 
     topicMapZoomScale = 1.0;

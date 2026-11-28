@@ -645,8 +645,8 @@ def main():
     )
     coords = tsne.fit_transform(D_fused)
 
-    # PCA-align horizontally into 1280 x 560 widescreen viewBox
-    W, H = 1280, 560
+    # PCA-align horizontally into 1280 x 672 widescreen viewBox
+    W, H = 1280, 672
     coords_c = coords - coords.mean(axis=0, keepdims=True)
     _, _, vt = np.linalg.svd(coords_c, full_matrices=False)
     coords_rot = coords_c @ vt.T

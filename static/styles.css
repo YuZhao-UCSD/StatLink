@@ -2978,7 +2978,7 @@ body:not([data-active-view="explore"]) .topbar-logo-btn {
 .topic-map-stage {
   position: relative;
   width: 100%;
-  height: 540px;
+  height: 648px;
   border-radius: 14px;
   border: 1px solid var(--border);
   background-color: var(--bg-surface);
@@ -3118,7 +3118,7 @@ body:not([data-active-view="explore"]) .topbar-logo-btn {
 
 @media (max-width: 768px) {
   .topic-map-stage {
-    height: 360px;
+    height: 432px;
   }
   .topic-map-search {
     width: 100%;
