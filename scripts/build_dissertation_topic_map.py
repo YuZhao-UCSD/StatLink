@@ -51,7 +51,7 @@ LOCAL_BASE_MODEL = os.path.join(BASE_DIR, "data_raw", "hf_multilingual_minilm")
 FINETUNED_DIR = os.path.join(BASE_DIR, "data_raw", "stat_minilm_msc2020_finetuned")
 
 MACRO_DOMAINS = [
-    "Bayesian & Causal Inference",
+    "Statistical Inference & Theory",
     "Stochastic Processes & Probability",
     "Clinical Biostatistics",
     "ML & High-Dimensional Stats",
@@ -59,7 +59,7 @@ MACRO_DOMAINS = [
 ]
 
 CLUSTER_PALETTE = [
-    "#3b5bdb",  # Indigo  — Bayesian & Causal Inference
+    "#3b5bdb",  # Indigo  — Statistical Inference & Theory
     "#0f9d58",  # Emerald — Stochastic Processes & Probability
     "#d97706",  # Amber   — Clinical Biostatistics
     "#8b5cf6",  # Violet  — ML & High-Dimensional Stats
