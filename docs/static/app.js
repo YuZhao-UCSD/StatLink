@@ -199,7 +199,7 @@
     } else if (snap.currentView === "explore" && snap.query) {
       document.title = `${snap.query} — StatLink Search`;
     } else if (snap.currentView === "explore") {
-      document.title = "StatLink — Academic Family Tree of Statistics, Biostatistics & Probability";
+      document.title = "StatLink — Academic Family Tree of Statistics";
     }
     if (!replace && typeof window.gtag === "function") {
       window.gtag("event", "page_view", {
