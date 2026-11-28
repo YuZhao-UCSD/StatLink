@@ -783,38 +783,70 @@
         return null;
       });
 
-    // Greedy volume-first label decluttering using zoom-compensated screen-space boxes
+    // Greedy volume-first label decluttering with micro-nudge placement & larger-bubble occlusion guard
     const topicsByVol = (topicMapCache.topics || []).slice().sort((a, b) => b.count - a.count);
     const placedBoxes = [];
+    const unplacedLarger = [];
     const visibleLabelIds = new Set();
+    const labelOffsetY = new Map();
 
     for (const t of topicsByVol) {
       if (hasFilter && !topicMatchesFilter(t) && t.id !== topicMapSelectedId) continue;
       const effFs = (t._fontSize || 11) / fontDiv;
-      const halfW = t.label.length * effFs * 0.32 + 5 / k;
-      const halfH = effFs * 0.62 + 3 / k;
-      const x1 = t.x - halfW;
-      const x2 = t.x + halfW;
-      const y1 = t.y - halfH;
-      const y2 = t.y + halfH;
+      const halfW = t.label.length * effFs * 0.265 + 3.0 / k;
+      const halfH = effFs * 0.54 + 2.0 / k;
+      const dispR = t._dispR || 10;
+      const n1 = Math.min(dispR * 0.55, 11.0 / k);
+      const n2 = Math.min(dispR + 2.5 / k, 21.0 / k);
+      const candidates =
+        t.id === topicMapSelectedId || topicMapSearchQuery || dispR < 8.5
+          ? [0]
+          : [0, -n1, n1, -n2, n2];
 
-      let collides = false;
-      if (t.id !== topicMapSelectedId && !topicMapSearchQuery) {
-        for (const b of placedBoxes) {
-          if (x1 < b[2] && x2 > b[0] && y1 < b[3] && y2 > b[1]) {
-            collides = true;
-            break;
+      let chosenDy = null;
+      for (const dy of candidates) {
+        const x1 = t.x - halfW;
+        const x2 = t.x + halfW;
+        const y1 = t.y + dy - halfH;
+        const y2 = t.y + dy + halfH;
+
+        let collides = false;
+        if (t.id !== topicMapSelectedId && !topicMapSearchQuery) {
+          for (const b of placedBoxes) {
+            if (x1 < b[2] && x2 > b[0] && y1 < b[3] && y2 > b[1]) {
+              collides = true;
+              break;
+            }
+          }
+          // Guard: never allow a smaller bubble's label to sit directly over an unlabeled larger bubble's core
+          if (!collides) {
+            for (const u of unplacedLarger) {
+              if (u.count > t.count * 1.12) {
+                const ur = Math.min((u._dispR || 10) * 0.7, 12.0 / k);
+                if (x1 < u.x + ur && x2 > u.x - ur && y1 < u.y + ur && y2 > u.y - ur) {
+                  collides = true;
+                  break;
+                }
+              }
+            }
           }
         }
+        if (!collides) {
+          chosenDy = dy;
+          placedBoxes.push([x1, y1, x2, y2]);
+          visibleLabelIds.add(t.id);
+          labelOffsetY.set(t.id, dy);
+          break;
+        }
       }
-      if (!collides) {
-        placedBoxes.push([x1, y1, x2, y2]);
-        visibleLabelIds.add(t.id);
+      if (chosenDy === null) {
+        unplacedLarger.push(t);
       }
     }
 
     svg.selectAll(".topic-label")
       .attr("display", (t) => (visibleLabelIds.has(t.id) ? null : "none"))
+      .attr("y", (t) => t.y + (labelOffsetY.get(t.id) || 0))
       .attr("font-size", (t) => `${((t._fontSize || 11) / fontDiv).toFixed(2)}px`)
       .style("stroke-width", `${(2.2 / k).toFixed(2)}px`)
       .attr("opacity", (t) => {
@@ -930,7 +962,7 @@
     topics.forEach((t) => {
       const norm = Math.max(0, (t.count - minC) / (maxC - minC + 1e-6));
       t._dispR = 4.2 + Math.pow(norm, 0.48) * 21.8;
-      t._fontSize = 8.2 + Math.pow(norm, 0.46) * 14.3;
+      t._fontSize = 7.8 + Math.pow(norm, 0.52) * 8.2;
     });
 
     const topicsSorted = topics.slice().sort((a, b) => b._dispR - a._dispR);
@@ -1002,7 +1034,7 @@
       .attr("x", (d) => d.x)
       .attr("y", (d) => d.y)
       .attr("font-size", (d) => `${d._fontSize.toFixed(1)}px`)
-      .attr("font-weight", (d) => (d._fontSize >= 13.5 ? 700 : d._fontSize >= 10.0 ? 600 : 500))
+      .attr("font-weight", (d) => (d._fontSize >= 12.2 ? 700 : d._fontSize >= 9.6 ? 600 : 500))
       .text((d) => d.label);
 
     topicMapZoomScale = 1.0;
