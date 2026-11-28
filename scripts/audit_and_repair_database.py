@@ -772,14 +772,31 @@ def pass5_finalize_database(db: sqlite3.Connection):
     )
     print(f"  Updated {len(deltas):,} changed people count rows in {time.time() - t0:.1f}s.")
 
-    # Refresh schools counts
+    # Refresh schools counts (single-pass GROUP BY instead of 3 correlated scans -> 0.3s!)
     t1 = time.time()
-    db.execute("""
-        UPDATE schools SET
-            core_stat_count = COALESCE((SELECT COUNT(*) FROM people p WHERE p.school = schools.school AND p.is_core_stat = 1), 0),
-            broad_stat_count = COALESCE((SELECT COUNT(*) FROM people p WHERE p.school = schools.school AND p.is_broad_stat = 1), 0),
-            total_phd_count = COALESCE((SELECT COUNT(*) FROM people p WHERE p.school = schools.school), 0)
-    """)
+    sch_counts = {}
+    for sch, tot, cs, bs in db.execute("""
+        SELECT school, COUNT(*), SUM(CASE WHEN is_core_stat=1 THEN 1 ELSE 0 END),
+               SUM(CASE WHEN is_broad_stat=1 THEN 1 ELSE 0 END)
+        FROM people WHERE school IS NOT NULL AND school != '' GROUP BY school
+    """):
+        sch_counts[sch] = (cs or 0, bs or 0, tot or 0)
+    db.execute("UPDATE schools SET core_stat_count = 0, broad_stat_count = 0, total_phd_count = 0")
+    db.executemany(
+        "UPDATE schools SET core_stat_count = ?, broad_stat_count = ?, total_phd_count = ? WHERE school = ?",
+        [(cs, bs, tot, sch) for sch, (cs, bs, tot) in sch_counts.items()],
+    )
+    # Also ensure any newly added university from our global ETD harvest is inserted into `schools`!
+    existing_sch = set(r[0] for r in db.execute("SELECT school FROM schools"))
+    new_sch_rows = []
+    for sch, (cs, bs, tot) in sch_counts.items():
+        if sch not in existing_sch and tot >= 1:
+            new_sch_rows.append((sch, sch.lower(), "", "", cs, bs, tot, None, None))
+    if new_sch_rows:
+        db.executemany(
+            "INSERT OR IGNORE INTO schools (school, norm_school, aliases, country, core_stat_count, broad_stat_count, total_phd_count, min_year, max_year) VALUES (?,?,?,?,?,?,?,?,?)",
+            new_sch_rows,
+        )
 
     # Refresh meta_stats['summary']
     row_meta = db.execute("SELECT value_json FROM meta_stats WHERE key = 'summary'").fetchone()

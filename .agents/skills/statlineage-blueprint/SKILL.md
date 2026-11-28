@@ -10,7 +10,7 @@ description: >-
 
 # StatLink (formerly StatLineage) — Ground-Zero Implementation Blueprint
 
-**StatLink** is a high-recall, precision-calibrated, strictly read-only interactive academic genealogy web platform unifying **553,889 PhD scholars** and **593,680 doctoral mentorship edges** (`85,820` Core Statistics, Biostatistics & Probability PhDs and `143,845` Broad Quantitative PhDs) across **207 tracked statistical PhD institutions** and **3,042 global universities**, served via Flask + SQLite FTS5 + D3.js v7 on `http://127.0.0.1:5050`.
+**StatLink** is a high-recall, precision-calibrated, strictly read-only interactive academic genealogy web platform unifying **566,675 PhD scholars** and **607,027 doctoral mentorship edges** (`101,123` Core Statistics, Biostatistics & Probability PhDs and `159,500+` Broad Quantitative PhDs) across **207 tracked statistical PhD institutions** and **3,000+ global universities**, served via Flask + SQLite FTS5 + D3.js v7 on `http://127.0.0.1:5050` (and deployed serverlessly to GitHub Pages in `docs/`).
 
 For deep-dive specifications, read the companion reference manuals in `./references/`:
 - **[Data Sources, Entity Resolution & ETL Pipeline](./references/data_sources_and_etl_pipeline.md)** — Raw dataset schemas (`MGP`, `AcademicTree`, `Wikidata`), entity resolution tiers, TF-IDF + LogisticRegression classifier, pre-2015 `AFT` subtree precision calibration, and all 7 post-2013 ProQuest / Cloudflare gap-closing harvesters (`UC eScholarship`, `DSpace 7`, `DigitalCommons OAI-PMH`, `HAL`, `DataCite`, `OpenAlex`, `UF Commencement PDFs`, `ORCID + Crossref`, `NIH PubMed Methodology`, and `Faculty CVs`).
@@ -53,6 +53,19 @@ StatLineage/
 │   ├── exhaustive_internet_era_websites_and_photos.py    # Internet-era (1980+) DBLP + CRAN + GitHub Pages + Google Sites + Advisor student link sweep
 │   ├── audit_and_fix_personal_website_precision.py       # Enforces concrete school/advisor/thesis anchors on github.io & Google Sites (purges homonyms)
 │   ├── deduplicate_hyphen_and_stub_scholars.py           # Merges hyphen/space/middle-initial & undated-stub duplicates (e.g. Wenxin / Wen-Xin Zhou)
+│   ├── etd_ingest_common.py                              # Shared canonical school resolver, strict doctoral filter, homonym-safe advisor matcher & upserter
+│   ├── harvest_global_dspace7_and_figshare.py            # Wave 1A: 34 DSpace 7 repos (incl. Cornell dc.contributor.chair) + Figshare (CMU KiltHub, Purdue Hammer)
+│   ├── harvest_oai_pmh_and_national_theses.py            # Wave 1B+2A: theses.fr API + German DNB SRU (700 $4 dgs) + UK White Rose/Southampton + DataCite 2000-2026
+│   ├── harvest_curl_dspace7_and_fixed_oai.py             # Wave 1C: curl.exe --ssl-no-revoke WAF bypass (UT Austin, JHU, Adelaide, Baylor, etc.) + UC eScholarship 2023-2026
+│   ├── harvest_wave1d_digitalcommons_and_cambridge.py    # Wave 1D: Polite max_workers=2 DigitalCommons qdc (Purdue, Clemson, WashU, Wayne State, etc.) + Cambridge/OpenAlex
+│   ├── harvest_wave1e_cambridge_umd_scholaris.py         # Wave 1E: DSpace 7 API subdomains (UMD api.drum, Cambridge api.repository, Canadian *.scholaris.ca)
+│   ├── harvest_expanded_orcid_pubmed_wikidata.py         # Wave 2B: Fresh Wikidata SPARQL P184 + 65-univ ORCID/Crossref + 65-univ NIH PubMed methodology
+│   ├── harvest_wikipedia_infobox_and_crossref_dissertations.py # Wave 4B: 6,515 Wikipedia infoboxes + Crossref type:dissertation (chair)
+│   ├── harvest_department_alumni_and_faculty_websites.py # Wave 3+4: Dept PhD alumni pages + ALL 6,405 verified Core Stat faculty websites & CV PDFs
+│   ├── audit_post_global_crawl.py                        # Wave 5A: Post-crawl precision scrub, school parenthetical normalizer & duplicate stub merger
+│   ├── audit_and_repair_database.py                      # Wave 5B: 5-pass full DB audit (UC MS/MA purge, chronology/homonym guard, dedup, live URL check, fast Pass 5)
+│   ├── build_dissertation_topic_map.py                   # GPU hierarchical ArcFace/CosFace fine-tuned multilingual MiniLM + 2D overlapping t-SNE landscape
+│   ├── build_gh_pages.py                                 # Serverless GitHub Pages static bundle builder (`docs/`, `static_api.js`, 150 scholar SEO pages, `sitemap.xml`)
 │   └── refresh_recent_data.py                            # Unified CLI orchestrator (--mode recent | profiles | full, --pack-github)
 └── static/
     ├── index.html                                        # 4-view SPA shell (Search, Tree Visualizer, Common Ancestor, Analytics)

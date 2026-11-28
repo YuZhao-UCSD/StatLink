@@ -723,21 +723,32 @@ def main():
     km_macro = KMeans(n_clusters=N_CLUSTERS, n_init=30, random_state=42)
     macro_assign = km_macro.fit_predict(pts_2d_s, sample_weight=np.sqrt(topic_sizes))
 
-    macro_names = {}
-    used_macro_names = set()
-    fallback_pool = ["ML & Causal", "Time & Finance", "Clinical Biostatistics", "Bayesian & Stochastic", "High-Dimensional Stats"]
+    # Optimal 1-to-1 assignment of the 5 canonical domain names to the 5 spatial clusters
+    import itertools
+    DOMAIN_SIGNATURES = {
+        "Bayesian & Causal Inference": ("bayesian", "causal", "nonparametric", "experimental design", "multiple testing", "quantile", "semiparametric", "inference", "bootstrap", "regression"),
+        "Stochastic Processes": ("stochastic", "markov", "martingale", "limit theorems", "brownian", "random walk", "percolation", "probability", "ergodic", "branching"),
+        "Clinical Biostatistics": ("biostat", "clinical", "survival", "genetics", "genomic", "neuroimaging", "longitudinal", "disease", "epidemiol", "missing data"),
+        "ML & High-Dimensional": ("machine learning", "high-dimensional", "artificial intelligence", "deep learning", "neural", "unsupervised", "reinforcement", "random graphs", "network", "classification"),
+        "Time Series & Econometrics": ("time series", "econometric", "financial", "finance", "spatial", "change-point", "reliability", "volatility", "economic", "forecast"),
+    }
+    dom_names = list(DOMAIN_SIGNATURES.keys())
+    score_mat = {}
+    for cid in range(N_CLUSTERS):
+        t_idxs = [i for i in range(len(valid_tids)) if macro_assign[i] == cid]
+        for dn, kws in DOMAIN_SIGNATURES.items():
+            sc = 0.0
+            for i in t_idxs:
+                lbl = topic_labels[i].lower()
+                if any(kw in lbl for kw in kws):
+                    sc += float(topic_sizes[i])
+            score_mat[(cid, dn)] = sc
+    best_perm = max(itertools.permutations(dom_names), key=lambda p: sum(score_mat[(c, p[c])] for c in range(N_CLUSTERS)))
+    macro_names = {cid: best_perm[cid] for cid in range(N_CLUSTERS)}
     for cid in range(N_CLUSTERS):
         t_idxs = sorted([i for i in range(len(valid_tids)) if macro_assign[i] == cid], key=lambda i: -topic_sizes[i])
         top_lbls = [topic_labels[i] for i in t_idxs]
-        nm = infer_macro_cluster_name(top_lbls)
-        if nm in used_macro_names:
-            for fb in fallback_pool:
-                if fb not in used_macro_names:
-                    nm = fb
-                    break
-        used_macro_names.add(nm)
-        macro_names[cid] = nm
-        print(f"  Cluster {cid}: {nm} ({len(t_idxs)} topics, {int(sum(topic_sizes[i] for i in t_idxs)):,} dissertations) | top: {top_lbls[:6]}")
+        print(f"  Cluster {cid}: {macro_names[cid]} ({len(t_idxs)} topics, {int(sum(topic_sizes[i] for i in t_idxs)):,} dissertations) | top: {top_lbls[:6]}")
 
     # Pull the 5 cluster centroids closer together (0.52x inter-cluster, 0.84x intra-cluster) so domains naturally touch & overlap into one unified continent
     gcx, gcy = 640.0, 280.0
