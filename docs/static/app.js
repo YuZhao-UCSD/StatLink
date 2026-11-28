@@ -789,9 +789,11 @@
     const unplacedLarger = [];
     const visibleLabelIds = new Set();
     const labelOffsetY = new Map();
+    const maxLabels = hasFilter ? 162 : Math.round(52 * Math.pow(k, 1.35));
 
     for (const t of topicsByVol) {
       if (hasFilter && !topicMatchesFilter(t) && t.id !== topicMapSelectedId) continue;
+      if (visibleLabelIds.size >= maxLabels && t.id !== topicMapSelectedId) continue;
       const effFs = (t._fontSize || 11) / fontDiv;
       const halfW = t.label.length * effFs * 0.265 + 3.0 / k;
       const halfH = effFs * 0.54 + 2.0 / k;
